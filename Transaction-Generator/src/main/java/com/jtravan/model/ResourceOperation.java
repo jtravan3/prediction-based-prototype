@@ -35,6 +35,9 @@ public class ResourceOperation {
 
     @Override
     public String toString() {
-        return resource.name() + "_" + operation.name() + "-" + executionTime;
+        if(resource == null || operation == null) {
+            return "";
+        }
+        return resource.name() + "_" + operation.name() + " - " + executionTime + "secs";
     }
 }

@@ -4,8 +4,8 @@ package com.jtravan.model;
  * Created by johnravan on 3/30/16.
  */
 public enum Operation {
-    READ(1),
-    WRITE(2);
+    READ(0),
+    WRITE(1);
 
     private final int operationNum;
 
@@ -19,9 +19,9 @@ public enum Operation {
 
     public static final Operation getOperationByOperationNum(int operationNum) {
 
-        if(operationNum == 1) {
+        if(operationNum == 0) {
             return READ;
-        } else if(operationNum == 2) {
+        } else if(operationNum == 1) {
             return WRITE;
         } else {
             return null;

@@ -5,6 +5,7 @@ import com.jtravan.model.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by johnravan on 3/31/16.
@@ -38,12 +39,13 @@ public class TransactionGenerator {
 
             for(int j = 0; j < numOfOperations; j++) {
 
-                double random = Math.random();
-                int operation = (int)random % 2;
-                int resource = (int)random % 26;
+                Random random = new Random();
+                int randomInt = random.nextInt(200);
+                int operation = randomInt % 2;
+                int resource = randomInt % 26;
 
                 ResourceOperation resourceOperation = new ResourceOperation();
-                resourceOperation.setExecutionTime((int)Math.random());
+                resourceOperation.setExecutionTime(random.nextInt(500));
                 resourceOperation.setOperation(Operation.getOperationByOperationNum(operation));
                 resourceOperation.setResource(Resource.getResourceByResourceNum(resource));
 
@@ -51,8 +53,9 @@ public class TransactionGenerator {
 
             }
 
-            double random = Math.random();
-            int category = (int)random % 4;
+            Random random = new Random();
+            int randomInt2 = random.nextInt(500);
+            int category = randomInt2 % 4;
             transaction.setCategory(Category.getCategoryByCategoryNum(category));
 
             transactions.add(transaction);

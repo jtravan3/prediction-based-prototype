@@ -36,7 +36,8 @@ public class Transaction {
             builder.append(", ");
         }
 
-        builder.append("COMMIT");
+        builder.append("COMMIT - ");
+        builder.append(category.name());
 
         return builder.toString();
     }

@@ -4,10 +4,10 @@ package com.jtravan.model;
  * Created by johnravan on 3/31/16.
  */
 public enum Category {
-    HCHE(1),
-    HCLE(2),
-    LCHE(3),
-    LCLE(4);
+    HCHE(0),
+    HCLE(1),
+    LCHE(2),
+    LCLE(3);
 
     private final int categoryNum;
 
@@ -21,13 +21,13 @@ public enum Category {
 
     public static final Category getCategoryByCategoryNum(int operationNum) {
 
-        if(operationNum == 1) {
+        if(operationNum == 0) {
             return HCHE;
-        } else if(operationNum == 2) {
+        } else if(operationNum == 1) {
             return HCLE;
-        } else if(operationNum == 3) {
+        } else if(operationNum == 2) {
             return LCHE;
-        } else if(operationNum == 4) {
+        } else if(operationNum == 3) {
             return LCLE;
         } else {
             return null;
