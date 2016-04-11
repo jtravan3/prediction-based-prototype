@@ -46,8 +46,10 @@ public class TransactionGenerator {
 
                 ResourceOperation resourceOperation = new ResourceOperation();
                 resourceOperation.setExecutionTime(random.nextInt(500));
+                resourceOperation.setIsCommitOperation(false);
                 resourceOperation.setOperation(Operation.getOperationByOperationNum(operation));
                 resourceOperation.setResource(Resource.getResourceByResourceNum(resource));
+                resourceOperation.setAssociatedTransaction(transaction);
 
                 transaction.addResourceOperation(resourceOperation);
 
@@ -57,6 +59,10 @@ public class TransactionGenerator {
             int randomInt2 = random.nextInt(500);
             int category = randomInt2 % 4;
             transaction.setCategory(Category.getCategoryByCategoryNum(category));
+
+            ResourceOperation commitOp = new ResourceOperation();
+            commitOp.setIsCommitOperation(true);
+            transaction.addResourceOperation(commitOp);
 
             transactions.add(transaction);
         }

@@ -8,6 +8,8 @@ public class ResourceOperation {
     private Operation operation;
     private Resource resource;
     private int executionTime;
+    private Transaction associatedTransaction;
+    private boolean isCommitOperation;
 
     public Operation getOperation() {
         return operation;
@@ -33,11 +35,32 @@ public class ResourceOperation {
         this.executionTime = executionTime;
     }
 
+    public Transaction getAssociatedTransaction() {
+        return associatedTransaction;
+    }
+
+    public void setAssociatedTransaction(Transaction associatedTransaction) {
+        this.associatedTransaction = associatedTransaction;
+    }
+
+    public boolean isCommitOperation() {
+        return isCommitOperation;
+    }
+
+    public void setIsCommitOperation(boolean commitOperation) {
+        isCommitOperation = commitOperation;
+    }
+
     @Override
     public String toString() {
+        if(isCommitOperation) {
+            return "COMMIT";
+        }
+
         if(resource == null || operation == null) {
             return "";
         }
+
         return resource.name() + "_" + operation.name() + " - " + executionTime + "secs";
     }
 }
