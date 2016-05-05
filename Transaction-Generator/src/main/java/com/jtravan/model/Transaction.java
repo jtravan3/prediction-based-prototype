@@ -42,6 +42,10 @@ public class Transaction {
         return resourceOperationList;
     }
 
+    public List<ResourceOperation> getAndRemoveOperationsByResource(Resource resource) {
+        return null;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

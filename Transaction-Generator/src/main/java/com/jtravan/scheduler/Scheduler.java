@@ -2,10 +2,7 @@ package com.jtravan.scheduler;
 
 import com.jtravan.model.*;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by johnravan on 4/10/16.
@@ -34,45 +31,71 @@ public class Scheduler {
             return null;
         }
 
-        Schedule schedule = new Schedule();
+        if(transactions.size() == 1) {
+            Schedule rtnSchedule = new Schedule();
+            rtnSchedule.setResourceOperationList(transactions.get(0).getResourceOperationList());
+            return rtnSchedule;
+        }
 
-        while(!transactions.isEmpty()) {
-            Iterator<Transaction> i = transactions.iterator();
-            while(i.hasNext()) {
+        Transaction t1 = transactions.remove(0);
+        Transaction t2 = transactions.remove(0);
 
-                Transaction t = i.next();
-                if(!t.hasMoreResourceOperations()) {
-                    i.remove();
-                    continue;
-                }
+        setConflictsForTransactions(t1, t2);
 
-                ResourceOperation op = t.getNextResourceOperation();
+        Transaction miniSchedule = createTransactionFromConflicts(t1,t2);
+        resetConflictMatrix();
 
-                // if there is no conflict
-                if(op.getResource() == null) {
-                    continue;
-                }
+        transactions.add(miniSchedule);
+        createSchedule(transactions);
 
-                if(!conflictMatrix.get(op.getResource())) {
+        return null;
 
-                    if(op.getOperation() == Operation.WRITE) {
-                        conflictMatrix.put(op.getResource(), true);
-                    }
+    }
 
-                    schedule.addResourceOperation(op);
+    private void setConflictsForTransactions(Transaction transaction1, Transaction transaction2) {
 
-                } else {
+        if(transaction1 == null || transaction2 == null) {
+            return;
+        }
 
-                    // add the rest of the transaction to the schedule
-                    schedule.addResourceOperation(op);
-                    while(t.hasMoreResourceOperations()) {
-                        schedule.addResourceOperation(t.getNextResourceOperation());
-                    }
+        for(ResourceOperation operation1 : transaction1.getResourceOperationList()) {
+            for (ResourceOperation operation2 : transaction2.getResourceOperationList()) {
+                if(operation1.getResource() == operation2.getResource() &&
+                        operation1.getOperation() == Operation.WRITE ||
+                        operation2.getOperation() == Operation.WRITE) {
+                    conflictMatrix.remove(operation1.getResource());
+                    conflictMatrix.put(operation1.getResource(), true);
                 }
             }
         }
 
-        return schedule;
+    }
+
+    private Transaction createTransactionFromConflicts(Transaction transaction1, Transaction transaction2) {
+
+        if(transaction1 == null || transaction2 == null) {
+            return null;
+        }
+
+        Transaction rtnTransaction = new Transaction();
+
+        for(Map.Entry<Resource, Boolean> entry : conflictMatrix.entrySet()) {
+            if(entry.getValue()) {
+
+                for(ResourceOperation operation : transaction1.getAndRemoveOperationsByResource(entry.getKey())) {
+                    rtnTransaction.addResourceOperation(operation);
+                }
+
+                for(ResourceOperation operation : transaction2.getAndRemoveOperationsByResource(entry.getKey())) {
+                    rtnTransaction.addResourceOperation(operation);
+                }
+
+            }
+        }
+
+
+        return rtnTransaction;
+
     }
 
     private void resetConflictMatrix() {

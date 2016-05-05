@@ -26,7 +26,7 @@ public class Schedule {
     }
 
     public void setResourceOperationList(List<ResourceOperation> resourceOperationList) {
-        this.resourceOperationList = resourceOperationList;
+        this.resourceOperationList = new LinkedList<ResourceOperation>(resourceOperationList);
     }
 
     @Override

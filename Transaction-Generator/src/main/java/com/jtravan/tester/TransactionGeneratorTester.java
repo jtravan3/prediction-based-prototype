@@ -20,11 +20,11 @@ public class TransactionGeneratorTester {
             System.out.println(transaction.toString());
         }
 
-        Scheduler scheduler = Scheduler.getInstance();
-        Schedule schedule = scheduler.createSchedule(transactions);
-
-        System.out.println();
-        System.out.println(schedule.toString());
+//        Scheduler scheduler = Scheduler.getInstance();
+//        Schedule schedule = scheduler.createSchedule(transactions);
+//
+//        System.out.println();
+//        System.out.println(schedule.toString());
 
     }
 
