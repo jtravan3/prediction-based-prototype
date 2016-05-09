@@ -14,15 +14,15 @@ public class TransactionGenerator {
 
     private static TransactionGenerator theInstance;
 
-    private TransactionGenerator() {
-
-    }
+    private TransactionGenerator() {}
 
     public static final TransactionGenerator getInstance() {
+
         if(theInstance == null) {
             theInstance = new TransactionGenerator();
         }
         return theInstance;
+
     }
 
     public List<Transaction> generateRandomTransactions(int numOfOperations, int numOfTransactions) {

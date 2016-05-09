@@ -13,15 +13,19 @@ public class Scheduler {
     private Map<Resource, Boolean> conflictMatrix;
 
     private Scheduler() {
+
         conflictMatrix = new HashMap<Resource, Boolean>();
         resetConflictMatrix();
+
     }
 
     public static final Scheduler getInstance() {
+
         if(theInstance == null) {
             theInstance = new Scheduler();
         }
         return theInstance;
+
     }
 
 
@@ -46,9 +50,7 @@ public class Scheduler {
         resetConflictMatrix();
 
         transactions.add(miniSchedule);
-        createSchedule(transactions);
-
-        return null;
+        return createSchedule(transactions);
 
     }
 
@@ -82,17 +84,28 @@ public class Scheduler {
         for(Map.Entry<Resource, Boolean> entry : conflictMatrix.entrySet()) {
             if(entry.getValue()) {
 
-                for(ResourceOperation operation : transaction1.getAndRemoveOperationsByResource(entry.getKey())) {
-                    rtnTransaction.addResourceOperation(operation);
+                // add all conflicting operations for transaction 1
+                for(ResourceOperation resourceOperation : transaction1.getAndRemoveOperationsByResource(entry.getKey())) {
+                    rtnTransaction.addResourceOperation(resourceOperation);
                 }
 
-                for(ResourceOperation operation : transaction2.getAndRemoveOperationsByResource(entry.getKey())) {
-                    rtnTransaction.addResourceOperation(operation);
+                // add all conflicting operations for transaction 2
+                for(ResourceOperation resourceOperation : transaction2.getAndRemoveOperationsByResource(entry.getKey())) {
+                    rtnTransaction.addResourceOperation(resourceOperation);
                 }
 
             }
         }
 
+        // add all conflicting operations for transaction 1
+        for(ResourceOperation resourceOperation : transaction1.getResourceOperationList()) {
+            rtnTransaction.addResourceOperation(resourceOperation);
+        }
+
+        // add all conflicting operations for transaction 2
+        for(ResourceOperation resourceOperation : transaction2.getResourceOperationList()) {
+            rtnTransaction.addResourceOperation(resourceOperation);
+        }
 
         return rtnTransaction;
 

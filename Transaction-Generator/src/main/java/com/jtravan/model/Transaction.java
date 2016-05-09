@@ -1,5 +1,6 @@
 package com.jtravan.model;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -43,7 +44,23 @@ public class Transaction {
     }
 
     public List<ResourceOperation> getAndRemoveOperationsByResource(Resource resource) {
-        return null;
+
+        if(resource == null || resourceOperationList.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List rtnList = new LinkedList();
+
+        for(ResourceOperation resourceOperation : resourceOperationList) {
+            if(resource == resourceOperation.getResource()) {
+                rtnList.add(resourceOperation);
+            }
+        }
+
+        resourceOperationList.removeAll(rtnList);
+
+        return rtnList;
+
     }
 
     @Override
