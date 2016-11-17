@@ -7,7 +7,7 @@ public class ResourceOperation {
 
     private Operation operation;
     private Resource resource;
-    private int executionTime;
+    private long executionTime_InMilliSeconds;
     private Transaction associatedTransaction;
     private boolean isCommitOperation;
 
@@ -27,12 +27,12 @@ public class ResourceOperation {
         this.resource = resource;
     }
 
-    public int getExecutionTime() {
-        return executionTime;
+    public long getExecutionTime() {
+        return executionTime_InMilliSeconds;
     }
 
     public void setExecutionTime(int executionTime) {
-        this.executionTime = executionTime;
+        this.executionTime_InMilliSeconds = executionTime;
     }
 
     public Transaction getAssociatedTransaction() {
@@ -53,7 +53,7 @@ public class ResourceOperation {
 
     @Override
     public String toString() {
-        if(isCommitOperation) {
+        if (isCommitOperation) {
             return "COMMIT";
         }
 
@@ -61,6 +61,6 @@ public class ResourceOperation {
             return "";
         }
 
-        return resource.name() + "_" + operation.name() + " - " + executionTime + "secs";
+        return resource.name() + "_" + operation.name() + " - " + executionTime_InMilliSeconds + "secs";
     }
 }

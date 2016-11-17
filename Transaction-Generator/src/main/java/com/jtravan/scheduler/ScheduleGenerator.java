@@ -2,27 +2,29 @@ package com.jtravan.scheduler;
 
 import com.jtravan.model.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by johnravan on 4/10/16.
  */
-public class Scheduler {
+public class ScheduleGenerator {
 
-    private static Scheduler theInstance;
+    private static ScheduleGenerator theInstance;
     private Map<Resource, Boolean> conflictMatrix;
 
-    private Scheduler() {
+    private ScheduleGenerator() {
 
         conflictMatrix = new HashMap<Resource, Boolean>();
         resetConflictMatrix();
 
     }
 
-    public static final Scheduler getInstance() {
+    public static final ScheduleGenerator getInstance() {
 
         if(theInstance == null) {
-            theInstance = new Scheduler();
+            theInstance = new ScheduleGenerator();
         }
         return theInstance;
 

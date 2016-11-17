@@ -11,7 +11,8 @@ import java.util.Set;
 public class ResourceCategoryDataStructure {
 
 
-    private static ResourceCategoryDataStructure theInstance;
+    private static ResourceCategoryDataStructure theReadInstance;
+    private static ResourceCategoryDataStructure theWriteInstance;
     private Map<Resource, Heap<ResourceOperation>> resourceMinHeapMap;
 
     private ResourceCategoryDataStructure() {
@@ -20,12 +21,21 @@ public class ResourceCategoryDataStructure {
 
     }
 
-    public static final ResourceCategoryDataStructure getInstance() {
+    public static final ResourceCategoryDataStructure getReadInstance() {
 
-        if(theInstance == null) {
-            theInstance = new ResourceCategoryDataStructure();
+        if(theReadInstance == null) {
+            theReadInstance = new ResourceCategoryDataStructure();
         }
-        return theInstance;
+        return theReadInstance;
+
+    }
+
+    public static final ResourceCategoryDataStructure getWriteInstance() {
+
+        if(theWriteInstance == null) {
+            theWriteInstance = new ResourceCategoryDataStructure();
+        }
+        return theWriteInstance;
 
     }
 
@@ -70,6 +80,11 @@ public class ResourceCategoryDataStructure {
 
     public Heap getHeapForResource(Resource resource) {
         return resourceMinHeapMap.get(resource);
+    }
+
+    public void clearHeapForResource(Resource resource) {
+        resourceMinHeapMap.get(resource).clear();
+        resourceMinHeapMap.put(resource, null);
     }
 
     public void printHeap(Heap heap) {

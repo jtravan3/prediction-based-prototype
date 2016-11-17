@@ -11,7 +11,7 @@ public enum Category {
 
     private final int categoryNum;
 
-    private Category(int categoryNum) {
+    Category(int categoryNum) {
         this.categoryNum = categoryNum;
     }
 
@@ -33,5 +33,13 @@ public enum Category {
             return null;
         }
 
+    }
+
+    public static final boolean isCategory1HigherThanCategory2(Category category1, Category category2) {
+        return category1.getCategoryNum() < category2.getCategoryNum();
+    }
+
+    public static final boolean isCategory1HigherThanOrEqualCategory2(Category category1, Category category2) {
+        return category1.getCategoryNum() <= category2.getCategoryNum();
     }
 }

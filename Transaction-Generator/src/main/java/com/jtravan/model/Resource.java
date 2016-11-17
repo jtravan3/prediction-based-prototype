@@ -4,37 +4,40 @@ package com.jtravan.model;
  * Created by johnravan on 3/30/16.
  */
 public enum Resource {
-    A(0),
-    B(1),
-    C(2),
-    D(3),
-    E(4),
-    F(5),
-    G(6),
-    H(7),
-    I(8),
-    J(9),
-    K(10),
-    L(11),
-    M(12),
-    N(13),
-    O(14),
-    P(15),
-    Q(16),
-    R(17),
-    S(18),
-    T(19),
-    U(20),
-    V(21),
-    W(22),
-    X(23),
-    Y(24),
-    Z(25);
+    A(0, false),
+    B(1, false),
+    C(2, false),
+    D(3, false),
+    E(4, false),
+    F(5, false),
+    G(6, false),
+    H(7, false),
+    I(8, false),
+    J(9, false),
+    K(10,false),
+    L(11,false),
+    M(12,false),
+    N(13,false),
+    O(14,false),
+    P(15,false),
+    Q(16,false),
+    R(17,false),
+    S(18,false),
+    T(19,false),
+    U(20,false),
+    V(21,false),
+    W(22,false),
+    X(23,false),
+    Y(24,false),
+    Z(25,false);
 
     private final int resourceNum;
+    private boolean isLocked;
 
-    private Resource(int resourceNum) {
+    Resource(int resourceNum, boolean isLocked) {
+
         this.resourceNum = resourceNum;
+        this.isLocked = isLocked;
     }
 
     public int getResourceNum() {
@@ -99,5 +102,17 @@ public enum Resource {
             return null;
         }
 
+    }
+
+    public final boolean isLocked() {
+        return this.isLocked;
+    }
+
+    public final void lock() {
+        this.isLocked = true;
+    }
+
+    public final void unlock() {
+        this.isLocked = false;
     }
 }

@@ -2,7 +2,8 @@ package com.jtravan.tester;
 
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
 import com.jtravan.model.*;
-import com.jtravan.scheduler.Scheduler;
+import com.jtravan.scheduler.ScheduleGenerator;
+
 import java.util.List;
 
 /**
@@ -75,8 +76,8 @@ public class ScheduleGeneratorTester {
         transactions.add(t1);
         transactions.add(t2);
 
-        Scheduler scheduler = Scheduler.getInstance();
-        Schedule schedule = scheduler.createSchedule(transactions);
+        ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
+        Schedule schedule = scheduleGenerator.createSchedule(transactions);
 
         System.out.println();
         System.out.println(schedule.toString());
