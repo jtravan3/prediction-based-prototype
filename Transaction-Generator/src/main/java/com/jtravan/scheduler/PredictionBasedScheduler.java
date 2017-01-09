@@ -15,16 +15,17 @@ public class PredictionBasedScheduler implements ScheduleExecutor {
     private PredictionBasedSchedulerActionService predictionBasedSchedulerActionService;
     private ResourceCategoryDataStructure resourceCategoryDataStructure_READ;
     private ResourceCategoryDataStructure resourceCategoryDataStructure_WRITE;
+    private Schedule schedule;
 
-    public PredictionBasedScheduler() {
-
+    public PredictionBasedScheduler(Schedule schedule) {
+        this.schedule = schedule;
         predictionBasedSchedulerActionService = new PredictionBasedSchedulerActionServiceImpl();
         resourceCategoryDataStructure_READ = ResourceCategoryDataStructure.getReadInstance();
         resourceCategoryDataStructure_WRITE = ResourceCategoryDataStructure.getWriteInstance();
 
     }
 
-    public void executeSchedule (Schedule schedule) {
+    public void executeSchedule () {
 
         if (schedule == null) {
             return;
@@ -32,7 +33,8 @@ public class PredictionBasedScheduler implements ScheduleExecutor {
 
         for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
 
-            Action action = predictionBasedSchedulerActionService.determineSchedulerAction(resourceCategoryDataStructure_READ, resourceCategoryDataStructure_WRITE, resourceOperation);
+            Action action = predictionBasedSchedulerActionService
+                    .determineSchedulerAction(resourceCategoryDataStructure_READ, resourceCategoryDataStructure_WRITE, resourceOperation);
 
             if (action == Action.DECLINE) {
 

@@ -60,9 +60,9 @@ public class TransactionGenerator {
             int category = randomInt2 % 4;
             transaction.setCategory(Category.getCategoryByCategoryNum(category));
 
-            ResourceOperation commitOp = new ResourceOperation();
-            commitOp.setIsCommitOperation(true);
-            transaction.addResourceOperation(commitOp);
+//            ResourceOperation commitOp = new ResourceOperation();
+//            commitOp.setIsCommitOperation(true);
+//            transaction.addResourceOperation(commitOp);
 
             transactions.add(transaction);
         }

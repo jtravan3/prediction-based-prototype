@@ -19,7 +19,7 @@ public class ResourceNotifcationManager implements  ResourceNotificationHandler{
         handlers = new LinkedList<ResourceNotificationHandler>();
     }
 
-    public static final ResourceNotifcationManager getInstance() {
+    public synchronized static final ResourceNotifcationManager getInstance() {
 
         if(theInstance == null) {
             theInstance = new ResourceNotifcationManager();
@@ -28,45 +28,49 @@ public class ResourceNotifcationManager implements  ResourceNotificationHandler{
 
     }
 
-    public void lock(Resource resource) {
+    public synchronized void lock(Resource resource) {
         resource.lock();
 
         ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
         resourceNotifcation.setResource(resource);
         resourceNotifcation.setLocked(true);
+        System.out.println("Locking Resource " + resource);
         handleResourceNotification(resourceNotifcation);
     }
 
-    public void unlock(Resource resource) {
+    public synchronized void unlock(Resource resource) {
         resource.unlock();
 
         ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
         resourceNotifcation.setResource(resource);
         resourceNotifcation.setLocked(false);
+        System.out.println("Unlocking Resource " + resource);
         handleResourceNotification(resourceNotifcation);
     }
 
-    public void registerHandler (ResourceNotificationHandler handler) {
+    public synchronized void registerHandler (ResourceNotificationHandler handler) {
 
         if (handler == null) {
             return;
         }
 
+        System.out.println("Resource Notification Handler registered for notifications");
         handlers.add(handler);
 
     }
 
-    public void deregisterHandler (ResourceNotificationHandler handler) {
+    public synchronized void deregisterHandler (ResourceNotificationHandler handler) {
 
         if (handler == null) {
             return;
         }
 
+        System.out.println("Resource Notification Handler registered for notifications");
         handlers.remove(handler);
 
     }
 
-    public void handleResourceNotification(ResourceNotifcation resourceNotifcation) {
+    public synchronized void handleResourceNotification(ResourceNotifcation resourceNotifcation) {
 
         if (resourceNotifcation == null) {
             return;

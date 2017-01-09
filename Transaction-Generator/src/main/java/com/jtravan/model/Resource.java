@@ -108,11 +108,11 @@ public enum Resource {
         return this.isLocked;
     }
 
-    public final void lock() {
+    public final synchronized void lock() {
         this.isLocked = true;
     }
 
-    public final void unlock() {
+    public final synchronized void unlock() {
         this.isLocked = false;
     }
 }

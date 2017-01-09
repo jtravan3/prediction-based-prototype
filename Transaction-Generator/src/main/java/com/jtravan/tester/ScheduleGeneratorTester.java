@@ -1,8 +1,8 @@
 package com.jtravan.tester;
 
+import com.jtravan.com.jtravan.generator.ScheduleGenerator;
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
 import com.jtravan.model.*;
-import com.jtravan.scheduler.ScheduleGenerator;
 
 import java.util.List;
 

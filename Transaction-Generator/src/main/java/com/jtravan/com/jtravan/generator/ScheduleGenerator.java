@@ -1,4 +1,4 @@
-package com.jtravan.scheduler;
+package com.jtravan.com.jtravan.generator;
 
 import com.jtravan.model.*;
 
