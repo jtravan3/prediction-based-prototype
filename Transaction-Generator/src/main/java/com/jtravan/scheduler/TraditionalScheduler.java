@@ -4,8 +4,8 @@ import com.jtravan.model.Resource;
 import com.jtravan.model.ResourceNotifcation;
 import com.jtravan.model.ResourceOperation;
 import com.jtravan.model.Schedule;
-import com.jtravan.services.ResourceNotifcationManager;
 import com.jtravan.services.ResourceNotificationHandler;
+import com.jtravan.services.ResourceNotificationManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,16 +19,17 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
     private Resource resourceWaitingOn;
     private Schedule schedule;
     private String schedulerName;
-    private ResourceNotifcationManager resourceNotifcationManager;
+    private ResourceNotificationManager resourceNotificationManager;
 
     public TraditionalScheduler(Schedule schedule, String name) {
         this.schedulerName = name;
         this.schedule = schedule;
         this.resourcesWeHaveLockOn = new HashMap<Resource, Integer>();
-        resourceNotifcationManager = ResourceNotifcationManager.getInstance();
-        resourceNotifcationManager.registerHandler(this);
+        resourceNotificationManager = ResourceNotificationManager.getInstance();
+        resourceNotificationManager.registerHandler(this);
     }
 
+    @SuppressWarnings("Duplicates")
     public void executeSchedule() {
 
         if (schedule == null) {
@@ -66,7 +67,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
                     System.out.println(schedulerName + ": Lock for Resource " + resourceOperation.getResource()
                             + " released and obtained");
                     resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
-                    resourceNotifcationManager.lock(resourceOperation.getResource());
+                    resourceNotificationManager.lock(resourceOperation.getResource());
 
                 }
 
@@ -74,7 +75,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
 
                 System.out.println(schedulerName + ": No lock obtained for Resource " + resourceOperation.getResource());
                 resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
-                resourceNotifcationManager.lock(resourceOperation.getResource());
+                resourceNotificationManager.lock(resourceOperation.getResource());
 
             }
 
@@ -96,7 +97,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
             Integer lockCount = resourcesWeHaveLockOn.get(resourceOperation.getResource());
             if (lockCount == 1) {
                 resourcesWeHaveLockOn.remove(resourceOperation.getResource());
-                resourceNotifcationManager.unlock(resourceOperation.getResource());
+                resourceNotificationManager.unlock(resourceOperation.getResource());
             } else {
                 resourcesWeHaveLockOn.put(resourceOperation.getResource(), --lockCount);
             }

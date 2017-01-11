@@ -9,20 +9,20 @@ import java.util.List;
 /**
  * Created by johnravan on 11/17/16.
  */
-public class ResourceNotifcationManager implements  ResourceNotificationHandler{
+public class ResourceNotificationManager implements  ResourceNotificationHandler{
 
-    private static ResourceNotifcationManager theInstance;
+    private static ResourceNotificationManager theInstance;
     List<ResourceNotificationHandler> handlers;
 
 
-    private ResourceNotifcationManager() {
+    private ResourceNotificationManager() {
         handlers = new LinkedList<ResourceNotificationHandler>();
     }
 
-    public synchronized static final ResourceNotifcationManager getInstance() {
+    public synchronized static final ResourceNotificationManager getInstance() {
 
         if(theInstance == null) {
-            theInstance = new ResourceNotifcationManager();
+            theInstance = new ResourceNotificationManager();
         }
         return theInstance;
 

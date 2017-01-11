@@ -40,6 +40,7 @@ public class ScheduleGenerator {
         if(transactions.size() == 1) {
             Schedule rtnSchedule = new Schedule();
             rtnSchedule.setResourceOperationList(transactions.get(0).getResourceOperationList());
+            transactions.get(0).setScheduleTransactionIsApartOf(rtnSchedule);
             return rtnSchedule;
         }
 
