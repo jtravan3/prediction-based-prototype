@@ -39,7 +39,8 @@ public class ResourceCategoryDataStructure {
 
     }
 
-    public ResourceOperation getHighestPriorityForResource(Resource resource) {
+    public synchronized ResourceOperation getHighestPriorityForResource(Resource resource) {
+
         if(resource == null) {
             return null;
         }
@@ -54,7 +55,7 @@ public class ResourceCategoryDataStructure {
         }
     }
 
-    public void insertResourceOperationForResource(Resource resource, ResourceOperation resourceOperation) {
+    public synchronized void insertResourceOperationForResource(Resource resource, ResourceOperation resourceOperation) {
 
         if(resourceOperation.isCommitOperation()) {
             return;
@@ -78,11 +79,11 @@ public class ResourceCategoryDataStructure {
         return resourceMinHeapMap.keySet();
     }
 
-    public Heap getHeapForResource(Resource resource) {
+    public synchronized Heap getHeapForResource(Resource resource) {
         return resourceMinHeapMap.get(resource);
     }
 
-    public void clearHeapForResource(Resource resource) {
+    public synchronized void clearHeapForResource(Resource resource) {
         resourceMinHeapMap.get(resource).clear();
         resourceMinHeapMap.put(resource, null);
     }

@@ -8,7 +8,20 @@ import com.jtravan.model.*;
 @SuppressWarnings("Duplicates")
 public class PredictionBasedSchedulerActionServiceImpl implements PredictionBasedSchedulerActionService {
 
-    public Action determineSchedulerAction(ResourceCategoryDataStructure rcdsRead, ResourceCategoryDataStructure rcdsWrite, ResourceOperation resourceOperation) {
+    private static PredictionBasedSchedulerActionServiceImpl theInstance;
+
+    private PredictionBasedSchedulerActionServiceImpl(){}
+
+    public synchronized static final PredictionBasedSchedulerActionServiceImpl getInstance() {
+
+        if(theInstance == null) {
+            theInstance = new PredictionBasedSchedulerActionServiceImpl();
+        }
+        return theInstance;
+
+    }
+
+    public synchronized Action determineSchedulerAction(ResourceCategoryDataStructure rcdsRead, ResourceCategoryDataStructure rcdsWrite, ResourceOperation resourceOperation) {
 
         Resource resource = resourceOperation.getResource();
 

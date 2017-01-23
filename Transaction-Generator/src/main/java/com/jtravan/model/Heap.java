@@ -54,7 +54,16 @@ public class Heap<T> {
      * @return Reference to top-most element of heap
      */
     public final T top() {
-        return (T)heap.get(0).element;
+
+        if(heap.size() == 0) {
+            return null;
+        }
+
+        if(heap.get(0) == null) {
+            return null;
+        } else {
+            return (T)heap.get(0).element;
+        }
     }
 
     //bound check missing

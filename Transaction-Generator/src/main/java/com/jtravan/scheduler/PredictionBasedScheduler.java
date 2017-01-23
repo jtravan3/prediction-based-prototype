@@ -5,6 +5,7 @@ import com.jtravan.services.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * Created by johnravan on 11/17/16.
@@ -21,6 +22,10 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
     private Resource resourceWaitingOn;
     private Schedule schedule;
     private String schedulerName;
+    private Future future;
+
+    private long startTime;
+    private long endTime;
 
     public PredictionBasedScheduler(Schedule schedule, String name) {
         this.schedule = schedule;
@@ -33,9 +38,21 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         scheduleNotificationManager = ScheduleNotificationManager.getInstance();
         scheduleNotificationManager.registerHandler(this);
 
-        predictionBasedSchedulerActionService = new PredictionBasedSchedulerActionServiceImpl();
+        predictionBasedSchedulerActionService = PredictionBasedSchedulerActionServiceImpl.getInstance();
         resourceCategoryDataStructure_READ = ResourceCategoryDataStructure.getReadInstance();
         resourceCategoryDataStructure_WRITE = ResourceCategoryDataStructure.getWriteInstance();
+    }
+
+    public synchronized void setFuture(Future future) {
+        this.future = future;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
     }
 
     @SuppressWarnings("Duplicates")
@@ -44,6 +61,8 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         if (schedule == null) {
             return;
         }
+
+        startTime = System.currentTimeMillis();
 
         // two phase locking - growing phase
         System.out.println("=========================================================");
@@ -54,6 +73,8 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
             Action action = predictionBasedSchedulerActionService
                     .determineSchedulerAction(resourceCategoryDataStructure_READ,
                             resourceCategoryDataStructure_WRITE, resourceOperation);
+
+            System.out.println(schedulerName + ": Action for resource " + resourceOperation.getResource() + ": " + action.name());
 
             switch (action) {
                 case DECLINE:
@@ -87,6 +108,7 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                     break;
                 case ELEVATE:
 
+                    System.out.println(schedulerName + ": Aborting schedule. Waiting for lock to be released...");
                     resourceWaitingOn = resourceOperation.getResource();
                     scheduleNotificationManager.abortSchedule(resourceOperation
                             .getAssociatedTransaction().getScheduleTransactionIsApartOf());
@@ -99,15 +121,25 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                         e.printStackTrace();
                     }
 
+                    System.out.println(schedulerName + ": Lock released! Locking resource...");
                     resourceNotificationManager.lock(resourceOperation.getResource());
                     resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
 
                     break;
                 case GRANT:
 
-                    System.out.println(schedulerName + ": No lock obtained for Resource " + resourceOperation.getResource());
-                    resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
-                    resourceNotificationManager.lock(resourceOperation.getResource());
+                    if(resourcesWeHaveLockOn.containsKey(resourceOperation.getResource())) {
+                        System.out.println(schedulerName + ": Already have lock for Resource "
+                                + resourceOperation.getResource() + ". Continuing execution");
+
+                        Integer lockCount = resourcesWeHaveLockOn.get(resourceOperation.getResource());
+                        resourcesWeHaveLockOn.put(resourceOperation.getResource(), ++lockCount);
+                        continue;
+                    } else {
+                        System.out.println(schedulerName + ": No lock obtained for Resource " + resourceOperation.getResource());
+                        resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
+                        resourceNotificationManager.lock(resourceOperation.getResource());
+                    }
 
                     break;
                 default:
@@ -132,14 +164,17 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
             Integer lockCount = resourcesWeHaveLockOn.get(resourceOperation.getResource());
             if (lockCount == 1) {
                 resourcesWeHaveLockOn.remove(resourceOperation.getResource());
+                System.out.println(schedulerName + ": No longer needing the lock. Releasing lock...");
                 resourceNotificationManager.unlock(resourceOperation.getResource());
             } else {
                 resourcesWeHaveLockOn.put(resourceOperation.getResource(), --lockCount);
+                System.out.println(schedulerName + ": Transaction still requires lock. Not unlocking just yet...");
             }
 
         }
 
         System.out.println(schedulerName + ": has successfully completed execution!");
+        endTime = System.currentTimeMillis();
 
     }
 
@@ -167,7 +202,8 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         if(scheduleNotification.getScheduleNotificationType() == ScheduleNotificationType.ABORT) {
             Schedule schedule = scheduleNotification.getSchedule();
             if(schedule == this.schedule) {
-                // TODO: stop executing thread
+                System.out.println(schedulerName + ": Schedule Aborted. Stopping execution and releasing locks...");
+                this.future.cancel(true);
                 for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
                     resourceNotificationManager.unlock(resourceOperation.getResource());
                 }

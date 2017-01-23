@@ -77,7 +77,9 @@ public class ResourceNotificationManager implements  ResourceNotificationHandler
         }
 
         for (ResourceNotificationHandler handler : handlers) {
-            handler.handleResourceNotification(resourceNotifcation);
+            if (handler != null) {
+                handler.handleResourceNotification(resourceNotifcation);
+            }
         }
 
     }

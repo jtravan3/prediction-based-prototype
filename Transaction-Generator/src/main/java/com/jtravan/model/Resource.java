@@ -104,7 +104,7 @@ public enum Resource {
 
     }
 
-    public final boolean isLocked() {
+    public final synchronized boolean isLocked() {
         return this.isLocked;
     }
 
