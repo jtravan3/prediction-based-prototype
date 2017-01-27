@@ -1,9 +1,6 @@
 package com.jtravan.model;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by johnravan on 6/22/16.
@@ -39,7 +36,7 @@ public class ResourceCategoryDataStructure {
 
     }
 
-    public synchronized ResourceOperation getHighestPriorityForResource(Resource resource) {
+    public ResourceOperation getHighestPriorityForResource(Resource resource) {
 
         if(resource == null) {
             return null;
@@ -55,14 +52,14 @@ public class ResourceCategoryDataStructure {
         }
     }
 
-    public synchronized void insertResourceOperationForResource(Resource resource, ResourceOperation resourceOperation) {
-
-        if(resourceOperation.isCommitOperation()) {
-            return;
-        }
+    public void insertResourceOperationForResource(Resource resource, ResourceOperation resourceOperation) {
 
         if(resource == null || resourceOperation == null) {
             throw new IllegalArgumentException("Resource or Resource Operation is null");
+        }
+
+        if(resourceOperation.isCommitOperation()) {
+            return;
         }
 
         Heap<ResourceOperation> resourceOperationHeap = resourceMinHeapMap.get(resource);
@@ -75,15 +72,47 @@ public class ResourceCategoryDataStructure {
         }
     }
 
+    public void removeResourceOperationForResouce(Resource resource, ResourceOperation resourceOperation) {
+
+        if(resource == null || resourceOperation == null) {
+            throw new IllegalArgumentException("Resource or Resource Operation is null");
+        }
+
+        if(resourceOperation.isCommitOperation()) {
+            return;
+        }
+
+        Heap<ResourceOperation> resourceOperationHeap = resourceMinHeapMap.get(resource);
+        if(resourceOperationHeap == null) {
+            return;
+        } else {
+
+            List<ResourceOperation> resourceOperationList = new LinkedList<ResourceOperation>();
+
+            int sizeOfList = resourceOperationHeap.getHeapNodes().size();
+            for(int i = 0; i < sizeOfList; i++) {
+                ResourceOperation ro = resourceOperationHeap.pop();
+                if(ro != resourceOperation) {
+                    resourceOperationList.add(ro);
+                }
+            }
+
+            for (ResourceOperation roToAdd : resourceOperationList) {
+                resourceOperationHeap.insert(roToAdd);
+            }
+        }
+
+    }
+
     public Set<Resource> getResourceSet() {
         return resourceMinHeapMap.keySet();
     }
 
-    public synchronized Heap getHeapForResource(Resource resource) {
+    public Heap getHeapForResource(Resource resource) {
         return resourceMinHeapMap.get(resource);
     }
 
-    public synchronized void clearHeapForResource(Resource resource) {
+    public void clearHeapForResource(Resource resource) {
         resourceMinHeapMap.get(resource).clear();
         resourceMinHeapMap.put(resource, null);
     }
@@ -129,7 +158,7 @@ public class ResourceCategoryDataStructure {
             int category1 = o1.getAssociatedTransaction().getCategory().getCategoryNum();
             int category2 = o2.getAssociatedTransaction().getCategory().getCategoryNum();
 
-            if(category1 > category2) {
+            if (category1 > category2) {
                 return 1;
             } else if (category1 < category2) {
                 return -1;

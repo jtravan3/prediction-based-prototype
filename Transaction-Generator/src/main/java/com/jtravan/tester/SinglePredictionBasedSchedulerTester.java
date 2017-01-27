@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class SinglePredictionBasedSchedulerTester {
 
-    private static final int NUM_OF_OPERATIONS_PER_TRANSACTION = 20;
+    private static final int NUM_OF_OPERATIONS_PER_TRANSACTION = 240;
     private static final int NUM_OF_TRANSACTIONS = 1;
 
     @SuppressWarnings("Duplicates")

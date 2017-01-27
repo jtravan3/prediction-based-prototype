@@ -30,10 +30,10 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
     }
 
     @SuppressWarnings("Duplicates")
-    public void executeSchedule() {
+    public boolean executeSchedule() {
 
         if (schedule == null) {
-            return;
+            return false;
         }
 
         // two phase locking - growing phase
@@ -67,7 +67,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
                     System.out.println(schedulerName + ": Lock for Resource " + resourceOperation.getResource()
                             + " released and obtained");
                     resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
-                    resourceNotificationManager.lock(resourceOperation.getResource());
+                    resourceNotificationManager.lock(resourceOperation.getResource(), resourceOperation.getOperation());
 
                 }
 
@@ -75,7 +75,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
 
                 System.out.println(schedulerName + ": No lock obtained for Resource " + resourceOperation.getResource());
                 resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
-                resourceNotificationManager.lock(resourceOperation.getResource());
+                resourceNotificationManager.lock(resourceOperation.getResource(), resourceOperation.getOperation());
 
             }
 
@@ -106,6 +106,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
 
         System.out.println(schedulerName + ": has successfully completed execution!");
 
+        return true;
     }
 
     public synchronized void handleResourceNotification(ResourceNotifcation resourceNotifcation) {

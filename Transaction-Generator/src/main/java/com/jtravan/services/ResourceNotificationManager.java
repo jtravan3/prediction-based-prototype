@@ -1,5 +1,6 @@
 package com.jtravan.services;
 
+import com.jtravan.model.Operation;
 import com.jtravan.model.Resource;
 import com.jtravan.model.ResourceNotifcation;
 
@@ -9,7 +10,7 @@ import java.util.List;
 /**
  * Created by johnravan on 11/17/16.
  */
-public class ResourceNotificationManager implements  ResourceNotificationHandler{
+public class ResourceNotificationManager implements ResourceNotificationHandler{
 
     private static ResourceNotificationManager theInstance;
     List<ResourceNotificationHandler> handlers;
@@ -19,7 +20,7 @@ public class ResourceNotificationManager implements  ResourceNotificationHandler
         handlers = new LinkedList<ResourceNotificationHandler>();
     }
 
-    public synchronized static final ResourceNotificationManager getInstance() {
+    public static final ResourceNotificationManager getInstance() {
 
         if(theInstance == null) {
             theInstance = new ResourceNotificationManager();
@@ -28,24 +29,42 @@ public class ResourceNotificationManager implements  ResourceNotificationHandler
 
     }
 
-    public synchronized void lock(Resource resource) {
-        resource.lock();
+    @SuppressWarnings("Duplicates")
+    public synchronized void lock(Resource resource, Operation operation) {
 
-        ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
-        resourceNotifcation.setResource(resource);
-        resourceNotifcation.setLocked(true);
-        System.out.println("Locking Resource " + resource);
-        handleResourceNotification(resourceNotifcation);
+        if (operation == Operation.READ) {
+            resource.lock();
+
+            ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
+            resourceNotifcation.setResource(resource);
+            resourceNotifcation.setLocked(true);
+            System.out.println("Locking Resource " + resource);
+            handleResourceNotification(resourceNotifcation);
+        } else {
+            if (!resource.isLocked()) {
+                resource.lock();
+
+                ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
+                resourceNotifcation.setResource(resource);
+                resourceNotifcation.setLocked(true);
+                System.out.println("Locking Resource " + resource);
+                handleResourceNotification(resourceNotifcation);
+            } else {
+                throw new IllegalStateException("Cannot lock already locked resource that has a Write lock");
+            }
+        }
     }
 
     public synchronized void unlock(Resource resource) {
-        resource.unlock();
+        if (resource.isLocked()) {
+            resource.unlock();
 
-        ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
-        resourceNotifcation.setResource(resource);
-        resourceNotifcation.setLocked(false);
-        System.out.println("Unlocking Resource " + resource);
-        handleResourceNotification(resourceNotifcation);
+            ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
+            resourceNotifcation.setResource(resource);
+            resourceNotifcation.setLocked(false);
+            System.out.println("Unlocking Resource " + resource);
+            handleResourceNotification(resourceNotifcation);
+        }
     }
 
     public synchronized void registerHandler (ResourceNotificationHandler handler) {
@@ -65,7 +84,7 @@ public class ResourceNotificationManager implements  ResourceNotificationHandler
             return;
         }
 
-        System.out.println("Resource Notification Handler registered for notifications");
+        System.out.println("Resource Notification Handler deregistered for notifications");
         handlers.remove(handler);
 
     }

@@ -61,7 +61,7 @@ public class ScheduleNotificationManager implements ScheduleNotificationHandler 
             return;
         }
 
-        System.out.println("Transaction Notification Handler registered for notifications");
+        System.out.println("Transaction Notification Handler deregistered for notifications");
         handlers.remove(handler);
 
     }

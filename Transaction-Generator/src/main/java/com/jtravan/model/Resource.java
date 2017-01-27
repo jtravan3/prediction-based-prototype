@@ -104,15 +104,15 @@ public enum Resource {
 
     }
 
-    public final synchronized boolean isLocked() {
+    public final boolean isLocked() {
         return this.isLocked;
     }
 
-    public final synchronized void lock() {
+    public final void lock() {
         this.isLocked = true;
     }
 
-    public final synchronized void unlock() {
+    public final void unlock() {
         this.isLocked = false;
     }
 }

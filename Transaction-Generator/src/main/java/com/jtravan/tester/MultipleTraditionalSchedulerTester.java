@@ -1,9 +1,7 @@
 package com.jtravan.tester;
 
 import com.jtravan.com.jtravan.generator.ScheduleGenerator;
-import com.jtravan.com.jtravan.generator.TransactionGenerator;
 import com.jtravan.model.Schedule;
-import com.jtravan.model.Transaction;
 import com.jtravan.scheduler.TraditionalScheduler;
 
 import java.util.LinkedList;
@@ -26,11 +24,16 @@ public class MultipleTraditionalSchedulerTester {
         List<TraditionalScheduler> traditionalSchedulerList = new LinkedList<TraditionalScheduler>();
 
         for(int i = 0; i < NUM_OF_SCHEDULERS_EXECUTING; i++) {
-            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
-            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
+//            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
+//            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
 
             ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
-            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
+            Schedule schedule;
+            if (i == 0) {
+                schedule = scheduleGenerator.create1of2ElevateSchedule();
+            } else {
+                schedule = scheduleGenerator.create2of2ElevateSchedule();
+            }
 
             System.out.println("Schedule to be executed: " + schedule);
 

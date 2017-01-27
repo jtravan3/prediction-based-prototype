@@ -9,6 +9,7 @@ import java.util.List;
 public class Schedule {
 
     private List<ResourceOperation> resourceOperationList;
+    private Category category;
 
     public Schedule() {
         resourceOperationList = new LinkedList<ResourceOperation>();
@@ -29,6 +30,14 @@ public class Schedule {
         this.resourceOperationList = new LinkedList<ResourceOperation>(resourceOperationList);
     }
 
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -39,6 +48,7 @@ public class Schedule {
             builder.append(", ");
         }
 
+        builder.append(category);
         builder.append(" - END");
 
         return builder.toString();
