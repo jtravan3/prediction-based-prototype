@@ -1,7 +1,7 @@
 package com.jtravan.scheduler;
 
 import com.jtravan.model.Resource;
-import com.jtravan.model.ResourceNotifcation;
+import com.jtravan.model.ResourceNotification;
 import com.jtravan.model.ResourceOperation;
 import com.jtravan.model.Schedule;
 import com.jtravan.services.ResourceNotificationHandler;
@@ -109,15 +109,15 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
         return true;
     }
 
-    public synchronized void handleResourceNotification(ResourceNotifcation resourceNotifcation) {
+    public synchronized void handleResourceNotification(ResourceNotification resourceNotification) {
 
-        if (resourceNotifcation == null) {
+        if (resourceNotification == null) {
             return;
         }
 
-        if (!resourceNotifcation.isLocked()) {
-            if (resourceNotifcation.getResource() == resourceWaitingOn) {
-                System.out.println(schedulerName + ": Resource, " + resourceNotifcation.getResource()
+        if (!resourceNotification.isLocked()) {
+            if (resourceNotification.getResource() == resourceWaitingOn) {
+                System.out.println(schedulerName + ": Resource, " + resourceNotification.getResource()
                         + ", that we have been waiting on, has been released and unlocked ");
                 notifyAll();
             }

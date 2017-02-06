@@ -5,12 +5,14 @@ import com.jtravan.services.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 
 /**
  * Created by johnravan on 11/17/16.
  */
 public class PredictionBasedScheduler implements ScheduleExecutor,
-        ResourceNotificationHandler, ScheduleNotificationHandler {
+        ResourceNotificationHandler, ScheduleNotificationHandler, Runnable {
 
     private PredictionBasedSchedulerActionService predictionBasedSchedulerActionService;
     private ResourceCategoryDataStructure resourceCategoryDataStructure_READ;
@@ -21,12 +23,12 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
     private Resource resourceWaitingOn;
     private Schedule schedule;
     private String schedulerName;
+    private CyclicBarrier gate;
 
     private long startTime;
     private long endTime;
 
     private boolean isAborted;
-    private boolean needsToNotify;
 
     public PredictionBasedScheduler(Schedule schedule, String name) {
         this.schedule = schedule;
@@ -34,7 +36,6 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         this.resourcesWeHaveLockOn = new HashMap<Resource, Integer>();
 
         isAborted = false;
-        needsToNotify = false;
 
         resourceNotificationManager = ResourceNotificationManager.getInstance();
         resourceNotificationManager.registerHandler(this);
@@ -63,7 +64,8 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         return schedulerName;
     }
 
-    @SuppressWarnings("Duplicates")
+    public void setGate(CyclicBarrier gate) { this.gate = gate; }
+
     public boolean executeSchedule() {
 
         if (schedule == null) {
@@ -104,7 +106,7 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                                 + resourceOperation.getResource() + " to be released...");
                         try {
                             synchronized (this) {
-                                wait(15000);
+                                wait();
                             }
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -130,7 +132,6 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                     resourceWaitingOn = resourceOperation.getResource();
                     resourceNotificationManager.lock(resourceOperation.getResource(), resourceOperation.getOperation());
                     resourcesWeHaveLockOn.put(resourceOperation.getResource(), 1);
-                    needsToNotify = true;
 
                     break;
                 case GRANT:
@@ -213,9 +214,10 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         System.out.println(schedulerName + ": has successfully completed execution!");
         endTime = System.currentTimeMillis();
 
-        synchronized (this) {
-            notifyAll();
-        }
+        ScheduleNotification scheduleNotification = new ScheduleNotification();
+        scheduleNotification.setSchedule(schedule);
+        scheduleNotification.setScheduleNotificationType(ScheduleNotificationType.SCHEDULE_COMPLETE);
+        scheduleNotificationManager.handleScheduleNotification(scheduleNotification);
 
         scheduleNotificationManager.deregisterHandler(this);
         resourceNotificationManager.deregisterHandler(this);
@@ -223,23 +225,56 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         return true;
     }
 
+    public void run() {
+        try {
+            gate.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (BrokenBarrierException e) {
+            e.printStackTrace();
+        }
+
+        boolean isFinished = executeSchedule();
+
+        if (!isFinished) {
+            System.out.println(getSchedulerName() + ": Aborted. Waiting for other schedule to finish before retrying execution");
+
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            // Clean up before re-running
+            resourceNotificationManager.deregisterHandler(this);
+            scheduleNotificationManager.deregisterHandler(this);
+            resourceNotificationManager.resetAllLocks();
+            ResourceCategoryDataStructure.getReadInstance().reset();
+            ResourceCategoryDataStructure.getWriteInstance().reset();
+
+            System.out.println(getSchedulerName() + ": Other schedule finished. Now retrying...");
+            PredictionBasedScheduler predictionBasedScheduler_ForAbort = new PredictionBasedScheduler(getSchedule(), "Re-run scheduler for " + getSchedulerName());
+            predictionBasedScheduler_ForAbort.executeSchedule();
+        }
+    }
+
     private boolean handleAbortOperation() {
         System.out.println(schedulerName + ": Execution aborted");
         System.out.println(schedulerName + ": Waiting and trying execution again");
-        scheduleNotificationManager.deregisterHandler(this);
-        resourceNotificationManager.deregisterHandler(this);
         return false;
     }
 
-    public void handleResourceNotification(ResourceNotifcation resourceNotifcation) {
+    public void handleResourceNotification(ResourceNotification resourceNotification) {
 
-        if (resourceNotifcation == null) {
+        if (resourceNotification == null) {
             return;
         }
 
-        if (!resourceNotifcation.isLocked()) {
-            if (resourceNotifcation.getResource() == resourceWaitingOn) {
-                System.out.println(schedulerName + ": Resource, " + resourceNotifcation.getResource()
+        if (!resourceNotification.isLocked()) {
+            if (resourceNotification.getResource() == resourceWaitingOn) {
+                System.out.println(schedulerName + ": Resource, " + resourceNotification.getResource()
                         + ", that we have been waiting on, has been released and unlocked ");
                 synchronized (this) {
                     notifyAll();
@@ -254,21 +289,41 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
             return;
         }
 
-        if(scheduleNotification.getScheduleNotificationType() == ScheduleNotificationType.ABORT) {
-            Schedule schedule = scheduleNotification.getSchedule();
-            if(schedule == this.schedule) {
-                isAborted = true;
-                for (ResourceOperation ro : schedule.getResourceOperationList()) {
+        Schedule schedule = scheduleNotification.getSchedule();
+        ScheduleNotificationType type = scheduleNotification.getScheduleNotificationType();
 
-                    if (ro.getOperation() == Operation.READ) {
-                        resourceCategoryDataStructure_READ.removeResourceOperationForResouce(ro.getResource(), ro);
-                    } else {
-                        resourceCategoryDataStructure_WRITE.removeResourceOperationForResouce(ro.getResource(), ro);
+        switch (type) {
+            case ABORT:
+
+
+                if(schedule == this.schedule) {
+                    isAborted = true;
+                    for (ResourceOperation ro : schedule.getResourceOperationList()) {
+
+                        if (ro.getOperation() == Operation.READ) {
+                            resourceCategoryDataStructure_READ.removeResourceOperationForResouce(ro.getResource(), ro);
+                        } else {
+                            resourceCategoryDataStructure_WRITE.removeResourceOperationForResouce(ro.getResource(), ro);
+                        }
+
+                        resourceNotificationManager.unlock(ro.getResource());
                     }
-
-                    resourceNotificationManager.unlock(ro.getResource());
                 }
-            }
+
+                break;
+            case SCHEDULE_COMPLETE:
+
+                if(schedule != this.schedule) {
+                    // Notify any waiting
+                    synchronized (this) {
+                        System.out.println(schedulerName + ": Notifying to start re-run");
+                        notifyAll();
+                    }
+                }
+
+                break;
+                default:
+                    throw new IllegalStateException("Case not handled yet");
         }
     }
 }

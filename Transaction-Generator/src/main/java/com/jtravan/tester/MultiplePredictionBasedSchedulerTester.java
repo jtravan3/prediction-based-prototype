@@ -42,13 +42,14 @@ public class MultiplePredictionBasedSchedulerTester {
             predictionBasedSchedulerList.add(new PredictionBasedScheduler(schedule, "Scheduler " + i));
         }
 
-        ExecutorService executorService = Executors.newCachedThreadPool();
+        ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_SCHEDULERS_EXECUTING);
         CyclicBarrier gate = new CyclicBarrier(NUM_OF_SCHEDULERS_EXECUTING + 1);
 
         final long startTime = System.currentTimeMillis();
 
         for (PredictionBasedScheduler predictionBasedScheduler: predictionBasedSchedulerList) {
-            executorService.execute(new PredictionBasedSchedulerTask(predictionBasedScheduler, gate));
+            predictionBasedScheduler.setGate(gate);
+            executorService.execute(predictionBasedScheduler);
         }
 
         System.out.println("Starting now...");
@@ -63,40 +64,4 @@ public class MultiplePredictionBasedSchedulerTester {
         System.out.println("Total execution time: " + (endTime - startTime));
     }
 
-    private static class PredictionBasedSchedulerTask implements Runnable {
-
-        private PredictionBasedScheduler predictionBasedScheduler;
-        private CyclicBarrier gate;
-
-        public PredictionBasedSchedulerTask(PredictionBasedScheduler predictionBasedScheduler, CyclicBarrier gate) {
-            this.predictionBasedScheduler = predictionBasedScheduler;
-            this.gate = gate;
-        }
-
-        public void run() {
-            try {
-                gate.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (BrokenBarrierException e) {
-                e.printStackTrace();
-            }
-
-            boolean isFinished = predictionBasedScheduler.executeSchedule();
-
-            if (!isFinished) {
-                System.out.println(predictionBasedScheduler.getSchedulerName() + ": Aborted. Waiting for other schedule to finish before retrying execution");
-                try {
-                    synchronized (this) {
-                        wait(2000);
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.println(predictionBasedScheduler.getSchedulerName() + ": Other schedule finished. Now retrying...");
-                PredictionBasedScheduler predictionBasedScheduler_ForAbort = new PredictionBasedScheduler(predictionBasedScheduler.getSchedule(), predictionBasedScheduler.getSchedulerName());
-                predictionBasedScheduler_ForAbort.executeSchedule();
-            }
-        }
-    }
 }

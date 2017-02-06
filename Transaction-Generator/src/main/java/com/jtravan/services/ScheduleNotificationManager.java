@@ -31,7 +31,7 @@ public class ScheduleNotificationManager implements ScheduleNotificationHandler 
 
     }
 
-    public synchronized void abortSchedule(Schedule schedule) {
+    public void abortSchedule(Schedule schedule) {
 
         if (schedule == null) {
             return;
@@ -44,7 +44,7 @@ public class ScheduleNotificationManager implements ScheduleNotificationHandler 
 
     }
 
-    public synchronized void registerHandler (ScheduleNotificationHandler handler) {
+    public void registerHandler (ScheduleNotificationHandler handler) {
 
         if (handler == null) {
             return;
@@ -55,7 +55,7 @@ public class ScheduleNotificationManager implements ScheduleNotificationHandler 
 
     }
 
-    public synchronized void deregisterHandler (ScheduleNotificationHandler handler) {
+    public void deregisterHandler (ScheduleNotificationHandler handler) {
 
         if (handler == null) {
             return;

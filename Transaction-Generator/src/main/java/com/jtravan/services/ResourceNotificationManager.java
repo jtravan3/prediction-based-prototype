@@ -2,7 +2,7 @@ package com.jtravan.services;
 
 import com.jtravan.model.Operation;
 import com.jtravan.model.Resource;
-import com.jtravan.model.ResourceNotifcation;
+import com.jtravan.model.ResourceNotification;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -30,41 +30,62 @@ public class ResourceNotificationManager implements ResourceNotificationHandler{
     }
 
     @SuppressWarnings("Duplicates")
-    public synchronized void lock(Resource resource, Operation operation) {
+    public void lock(Resource resource, Operation operation) {
 
         if (operation == Operation.READ) {
             resource.lock();
 
-            ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
-            resourceNotifcation.setResource(resource);
-            resourceNotifcation.setLocked(true);
+            ResourceNotification resourceNotification = new ResourceNotification();
+            resourceNotification.setResource(resource);
+            resourceNotification.setLocked(true);
             System.out.println("Locking Resource " + resource);
-            handleResourceNotification(resourceNotifcation);
+            handleResourceNotification(resourceNotification);
         } else {
             if (!resource.isLocked()) {
                 resource.lock();
 
-                ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
-                resourceNotifcation.setResource(resource);
-                resourceNotifcation.setLocked(true);
+                ResourceNotification resourceNotification = new ResourceNotification();
+                resourceNotification.setResource(resource);
+                resourceNotification.setLocked(true);
                 System.out.println("Locking Resource " + resource);
-                handleResourceNotification(resourceNotifcation);
+                handleResourceNotification(resourceNotification);
             } else {
-                throw new IllegalStateException("Cannot lock already locked resource that has a Write lock");
+                throw new IllegalStateException("Cannot lock already locked resource that has a Write lock. Resource " + resource.name());
             }
         }
     }
 
-    public synchronized void unlock(Resource resource) {
+    public void unlock(Resource resource) {
         if (resource.isLocked()) {
             resource.unlock();
 
-            ResourceNotifcation resourceNotifcation = new ResourceNotifcation();
-            resourceNotifcation.setResource(resource);
-            resourceNotifcation.setLocked(false);
+            ResourceNotification resourceNotification = new ResourceNotification();
+            resourceNotification.setResource(resource);
+            resourceNotification.setLocked(false);
             System.out.println("Unlocking Resource " + resource);
-            handleResourceNotification(resourceNotifcation);
+            handleResourceNotification(resourceNotification);
         }
+    }
+
+    public boolean isAllLocksReleased() {
+
+        boolean isAllLocksReleased = true;
+        for(Resource resource : Resource.values()) {
+            if (resource.isLocked()) {
+                isAllLocksReleased = false;
+                break;
+            }
+        }
+
+        return  isAllLocksReleased;
+    }
+
+    public void resetAllLocks() {
+
+        for(Resource resource : Resource.values()) {
+            resource.unlock();
+        }
+
     }
 
     public synchronized void registerHandler (ResourceNotificationHandler handler) {
@@ -89,15 +110,15 @@ public class ResourceNotificationManager implements ResourceNotificationHandler{
 
     }
 
-    public synchronized void handleResourceNotification(ResourceNotifcation resourceNotifcation) {
+    public synchronized void handleResourceNotification(ResourceNotification resourceNotification) {
 
-        if (resourceNotifcation == null) {
+        if (resourceNotification == null) {
             return;
         }
 
         for (ResourceNotificationHandler handler : handlers) {
             if (handler != null) {
-                handler.handleResourceNotification(resourceNotifcation);
+                handler.handleResourceNotification(resourceNotification);
             }
         }
 

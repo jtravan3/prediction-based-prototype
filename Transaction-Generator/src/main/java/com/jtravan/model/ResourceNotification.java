@@ -3,7 +3,7 @@ package com.jtravan.model;
 /**
  * Created by johnravan on 11/17/16.
  */
-public class ResourceNotifcation {
+public class ResourceNotification {
 
     private Resource resource;
     private boolean isLocked;

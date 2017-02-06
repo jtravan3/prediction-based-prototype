@@ -36,6 +36,12 @@ public class ResourceCategoryDataStructure {
 
     }
 
+    public void reset() {
+
+        resourceMinHeapMap = new HashMap<Resource, Heap<ResourceOperation>>();
+
+    }
+
     public ResourceOperation getHighestPriorityForResource(Resource resource) {
 
         if(resource == null) {
