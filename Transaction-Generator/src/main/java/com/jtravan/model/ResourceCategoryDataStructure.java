@@ -75,6 +75,7 @@ public class ResourceCategoryDataStructure {
             resourceMinHeapMap.put(resource, resourceOperationHeap);
         } else {
             resourceOperationHeap.insert(resourceOperation);
+            resourceMinHeapMap.put(resource, resourceOperationHeap);
         }
     }
 

@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * Created by johnravan on 11/17/16.
  */
-public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificationHandler {
+public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificationHandler, Runnable {
 
     private Map<Resource, Integer> resourcesWeHaveLockOn;
     private Resource resourceWaitingOn;
@@ -29,8 +29,12 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
         resourceNotificationManager.registerHandler(this);
     }
 
+    public void run() {
+        executeSchedule();
+    }
+
     @SuppressWarnings("Duplicates")
-    public boolean executeSchedule() {
+    public synchronized boolean executeSchedule() {
 
         if (schedule == null) {
             return false;
@@ -109,7 +113,8 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
         return true;
     }
 
-    public synchronized void handleResourceNotification(ResourceNotification resourceNotification) {
+    @SuppressWarnings("Duplicates")
+    public void handleResourceNotification(ResourceNotification resourceNotification) {
 
         if (resourceNotification == null) {
             return;
@@ -119,7 +124,9 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
             if (resourceNotification.getResource() == resourceWaitingOn) {
                 System.out.println(schedulerName + ": Resource, " + resourceNotification.getResource()
                         + ", that we have been waiting on, has been released and unlocked ");
-                notifyAll();
+                synchronized (this) {
+                    notifyAll();
+                }
             }
         }
 

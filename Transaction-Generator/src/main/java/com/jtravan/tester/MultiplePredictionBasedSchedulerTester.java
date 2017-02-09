@@ -1,9 +1,8 @@
 package com.jtravan.tester;
 
 import com.jtravan.com.jtravan.generator.ScheduleGenerator;
-import com.jtravan.com.jtravan.generator.TransactionGenerator;
+import com.jtravan.model.Category;
 import com.jtravan.model.Schedule;
-import com.jtravan.model.Transaction;
 import com.jtravan.scheduler.PredictionBasedScheduler;
 
 import java.util.LinkedList;
@@ -25,18 +24,18 @@ public class MultiplePredictionBasedSchedulerTester {
         List<PredictionBasedScheduler> predictionBasedSchedulerList = new LinkedList<PredictionBasedScheduler>();
 
         for(int i = 0; i < NUM_OF_SCHEDULERS_EXECUTING; i++) {
-            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
-            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
+//            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
+//            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
 
             ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
-//            Schedule schedule;
-//            if (i == 0) {
-//                schedule = scheduleGenerator.create1of2ElevateSchedule();
-//            } else {
-//                schedule = scheduleGenerator.create2of2ElevateSchedule();
-//            }
+            Schedule schedule;
+            if (i == 0) {
+                schedule = scheduleGenerator.create1of2ExampleSchedule(Category.HCHE);
+            } else {
+                schedule = scheduleGenerator.create2of2ExampleSchedule(Category.HCHE);
+            }
 
-            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
+//            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
             System.out.println("Schedule to be executed: " + schedule);
 
             predictionBasedSchedulerList.add(new PredictionBasedScheduler(schedule, "Scheduler " + i));

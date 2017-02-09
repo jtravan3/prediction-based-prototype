@@ -133,16 +133,16 @@ public class ScheduleGenerator {
         return createSchedule(transactionList);
     }
 
-    public Schedule create1of2ExampleSchedule() {
+    public Schedule create1of2ExampleSchedule(Category category) {
 
         Transaction transaction = new Transaction();
-        transaction.setCategory(Category.LCHE);
+        transaction.setCategory(category);
 
         ResourceOperation ro1 = new ResourceOperation();
         ro1.setAssociatedTransaction(transaction);
         ro1.setExecutionTime(263);
         ro1.setIsCommitOperation(false);
-        ro1.setOperation(Operation.READ);
+        ro1.setOperation(Operation.WRITE);
         ro1.setResource(Resource.A);
         transaction.addResourceOperation(ro1);
 
@@ -150,33 +150,41 @@ public class ScheduleGenerator {
         ro2.setAssociatedTransaction(transaction);
         ro2.setExecutionTime(409);
         ro2.setIsCommitOperation(false);
-        ro2.setOperation(Operation.READ);
-        ro2.setResource(Resource.B);
+        ro2.setOperation(Operation.WRITE);
+        ro2.setResource(Resource.C);
         transaction.addResourceOperation(ro2);
 
-//        ResourceOperation ro3 = new ResourceOperation();
-//        ro3.setAssociatedTransaction(transaction);
-//        ro3.setExecutionTime(153);
-//        ro3.setIsCommitOperation(false);
-//        ro3.setOperation(Operation.WRITE);
-//        ro3.setResource(Resource.J);
-//        transaction.addResourceOperation(ro3);
-//
-//        ResourceOperation ro4 = new ResourceOperation();
-//        ro4.setAssociatedTransaction(transaction);
-//        ro4.setExecutionTime(35);
-//        ro4.setIsCommitOperation(false);
-//        ro4.setOperation(Operation.WRITE);
-//        ro4.setResource(Resource.N);
-//        transaction.addResourceOperation(ro4);
-//
-//        ResourceOperation ro5 = new ResourceOperation();
-//        ro5.setAssociatedTransaction(transaction);
-//        ro5.setExecutionTime(198);
-//        ro5.setIsCommitOperation(false);
-//        ro5.setOperation(Operation.READ);
-//        ro5.setResource(Resource.E);
-//        transaction.addResourceOperation(ro5);
+        ResourceOperation ro3 = new ResourceOperation();
+        ro3.setAssociatedTransaction(transaction);
+        ro3.setExecutionTime(263);
+        ro3.setIsCommitOperation(false);
+        ro3.setOperation(Operation.WRITE);
+        ro3.setResource(Resource.B);
+        transaction.addResourceOperation(ro3);
+
+        ResourceOperation ro4 = new ResourceOperation();
+        ro4.setAssociatedTransaction(transaction);
+        ro4.setExecutionTime(409);
+        ro4.setIsCommitOperation(false);
+        ro4.setOperation(Operation.WRITE);
+        ro4.setResource(Resource.D);
+        transaction.addResourceOperation(ro4);
+
+        ResourceOperation ro5 = new ResourceOperation();
+        ro5.setAssociatedTransaction(transaction);
+        ro5.setExecutionTime(263);
+        ro5.setIsCommitOperation(false);
+        ro5.setOperation(Operation.WRITE);
+        ro5.setResource(Resource.E);
+        transaction.addResourceOperation(ro5);
+
+        ResourceOperation ro6 = new ResourceOperation();
+        ro6.setAssociatedTransaction(transaction);
+        ro6.setExecutionTime(409);
+        ro6.setIsCommitOperation(false);
+        ro6.setOperation(Operation.WRITE);
+        ro6.setResource(Resource.F);
+        transaction.addResourceOperation(ro6);
 
         List<Transaction> transactionList = new LinkedList<Transaction>();
         transactionList.add(transaction);
@@ -184,16 +192,16 @@ public class ScheduleGenerator {
         return createSchedule(transactionList);
     }
 
-    public Schedule create2of2ExampleSchedule() {
+    public Schedule create2of2ExampleSchedule(Category category) {
 
         Transaction transaction = new Transaction();
-        transaction.setCategory(Category.LCHE);
+        transaction.setCategory(category);
 
         ResourceOperation ro1 = new ResourceOperation();
         ro1.setAssociatedTransaction(transaction);
         ro1.setExecutionTime(263);
         ro1.setIsCommitOperation(false);
-        ro1.setOperation(Operation.READ);
+        ro1.setOperation(Operation.WRITE);
         ro1.setResource(Resource.B);
         transaction.addResourceOperation(ro1);
 
@@ -202,32 +210,40 @@ public class ScheduleGenerator {
         ro2.setExecutionTime(409);
         ro2.setIsCommitOperation(false);
         ro2.setOperation(Operation.WRITE);
-        ro2.setResource(Resource.B);
+        ro2.setResource(Resource.D);
         transaction.addResourceOperation(ro2);
 
         ResourceOperation ro3 = new ResourceOperation();
         ro3.setAssociatedTransaction(transaction);
-        ro3.setExecutionTime(153);
+        ro3.setExecutionTime(263);
         ro3.setIsCommitOperation(false);
-        ro3.setOperation(Operation.READ);
+        ro3.setOperation(Operation.WRITE);
         ro3.setResource(Resource.A);
         transaction.addResourceOperation(ro3);
-//
+
         ResourceOperation ro4 = new ResourceOperation();
         ro4.setAssociatedTransaction(transaction);
-        ro4.setExecutionTime(35);
+        ro4.setExecutionTime(409);
         ro4.setIsCommitOperation(false);
         ro4.setOperation(Operation.WRITE);
-        ro4.setResource(Resource.A);
+        ro4.setResource(Resource.C);
         transaction.addResourceOperation(ro4);
-//
-//        ResourceOperation ro5 = new ResourceOperation();
-//        ro5.setAssociatedTransaction(transaction);
-//        ro5.setExecutionTime(198);
-//        ro5.setIsCommitOperation(false);
-//        ro5.setOperation(Operation.READ);
-//        ro5.setResource(Resource.E);
-//        transaction.addResourceOperation(ro5);
+
+        ResourceOperation ro5 = new ResourceOperation();
+        ro5.setAssociatedTransaction(transaction);
+        ro5.setExecutionTime(263);
+        ro5.setIsCommitOperation(false);
+        ro5.setOperation(Operation.WRITE);
+        ro5.setResource(Resource.F);
+        transaction.addResourceOperation(ro5);
+
+        ResourceOperation ro6 = new ResourceOperation();
+        ro6.setAssociatedTransaction(transaction);
+        ro6.setExecutionTime(409);
+        ro6.setIsCommitOperation(false);
+        ro6.setOperation(Operation.WRITE);
+        ro6.setResource(Resource.E);
+        transaction.addResourceOperation(ro6);
 
         List<Transaction> transactionList = new LinkedList<Transaction>();
         transactionList.add(transaction);

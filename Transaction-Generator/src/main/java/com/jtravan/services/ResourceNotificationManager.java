@@ -30,7 +30,7 @@ public class ResourceNotificationManager implements ResourceNotificationHandler{
     }
 
     @SuppressWarnings("Duplicates")
-    public void lock(Resource resource, Operation operation) {
+    public synchronized void lock(Resource resource, Operation operation) {
 
         if (operation == Operation.READ) {
             resource.lock();

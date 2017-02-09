@@ -1,9 +1,8 @@
 package com.jtravan.tester;
 
 import com.jtravan.com.jtravan.generator.ScheduleGenerator;
-import com.jtravan.com.jtravan.generator.TransactionGenerator;
+import com.jtravan.model.Category;
 import com.jtravan.model.Schedule;
-import com.jtravan.model.Transaction;
 import com.jtravan.scheduler.TraditionalScheduler;
 
 import java.util.LinkedList;
@@ -26,18 +25,18 @@ public class MultipleTraditionalSchedulerTester {
         List<TraditionalScheduler> traditionalSchedulerList = new LinkedList<TraditionalScheduler>();
 
         for(int i = 0; i < NUM_OF_SCHEDULERS_EXECUTING; i++) {
-            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
-            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
+//            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
+//            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
 
             ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
-//            Schedule schedule;
-//            if (i == 0) {
-//                schedule = scheduleGenerator.create1of2ExampleSchedule();
-//            } else {
-//                schedule = scheduleGenerator.create2of2ExampleSchedule();
-//            }
+            Schedule schedule;
+            if (i == 0) {
+                schedule = scheduleGenerator.create1of2ExampleSchedule(Category.HCHE);
+            } else {
+                schedule = scheduleGenerator.create2of2ExampleSchedule(Category.HCHE);
+            }
 
-            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
+//            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
             System.out.println("Schedule to be executed: " + schedule);
 
             traditionalSchedulerList.add(new TraditionalScheduler(schedule, "Scheduler " + i));
@@ -48,7 +47,7 @@ public class MultipleTraditionalSchedulerTester {
         final long startTime = System.currentTimeMillis();
 
         for (TraditionalScheduler traditionalScheduler: traditionalSchedulerList) {
-            executorService.execute(new TraditionalSchedulerTask(traditionalScheduler));
+            executorService.execute(traditionalScheduler);
         }
 
         executorService.shutdown();
@@ -56,18 +55,5 @@ public class MultipleTraditionalSchedulerTester {
 
         final long endTime = System.currentTimeMillis();
         System.out.println("Total execution time: " + (endTime - startTime));
-    }
-
-    private static class TraditionalSchedulerTask implements Runnable {
-
-        private TraditionalScheduler traditionalScheduler;
-
-        public TraditionalSchedulerTask(TraditionalScheduler traditionalScheduler) {
-            this.traditionalScheduler = traditionalScheduler;
-        }
-
-        public void run() {
-            traditionalScheduler.executeSchedule();
-        }
     }
 }
