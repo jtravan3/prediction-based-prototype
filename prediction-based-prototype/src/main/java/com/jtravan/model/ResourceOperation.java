@@ -10,6 +10,15 @@ public class ResourceOperation {
     private long executionTime_InMilliSeconds;
     private Transaction associatedTransaction;
     private boolean isCommitOperation;
+    private boolean isAbortOperation;
+
+    public boolean isAbortOperation() {
+        return isAbortOperation;
+    }
+
+    public void setAbortOperation(boolean abortOperation) {
+        isAbortOperation = abortOperation;
+    }
 
     public Operation getOperation() {
         return operation;

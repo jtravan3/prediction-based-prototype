@@ -20,12 +20,16 @@ public class ResourceNotificationManager implements ResourceNotificationHandler{
         handlers = new LinkedList<ResourceNotificationHandler>();
     }
 
-    public static final ResourceNotificationManager getInstance() {
+    public static final ResourceNotificationManager getInstance(boolean createOneTimeInstance) {
 
-        if(theInstance == null) {
-            theInstance = new ResourceNotificationManager();
+        if(createOneTimeInstance) {
+            return new ResourceNotificationManager();
+        } else {
+            if(theInstance == null) {
+                theInstance = new ResourceNotificationManager();
+            }
+            return theInstance;
         }
-        return theInstance;
 
     }
 

@@ -25,12 +25,16 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
         this.schedulerName = name;
         this.schedule = schedule;
         this.resourcesWeHaveLockOn = new HashMap<Resource, Integer>();
-        resourceNotificationManager = ResourceNotificationManager.getInstance();
+        resourceNotificationManager = ResourceNotificationManager.getInstance(false);
         resourceNotificationManager.registerHandler(this);
     }
 
     public void run() {
         executeSchedule();
+    }
+
+    public Schedule getSchedule() {
+        return schedule;
     }
 
     @SuppressWarnings("Duplicates")

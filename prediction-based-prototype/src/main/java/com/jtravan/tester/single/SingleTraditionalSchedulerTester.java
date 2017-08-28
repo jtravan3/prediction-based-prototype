@@ -1,4 +1,4 @@
-package com.jtravan.tester;
+package com.jtravan.tester.single;
 
 import com.jtravan.com.jtravan.generator.ScheduleGenerator;
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
@@ -19,7 +19,7 @@ public class SingleTraditionalSchedulerTester {
     public static void main(String[] args) {
 
         TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
-        List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS);
+        List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS, false);
 
         ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
         Schedule schedule = scheduleGenerator.createSchedule(transactionList);

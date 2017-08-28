@@ -31,7 +31,11 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
 
     private boolean isAborted;
 
-    public PredictionBasedScheduler(Schedule schedule, String name) {
+    public PredictionBasedScheduler(Schedule schedule, String name, boolean isSandBoxExecution) {
+        constructorOperations(schedule, name, isSandBoxExecution);
+    }
+
+    private void constructorOperations(Schedule schedule, String name, boolean isSandBoxExecution) {
         this.schedule = schedule;
         this.schedulerName = name;
         this.resourcesWeHaveLockOn_Read = new HashMap<Resource, Integer>();
@@ -39,15 +43,15 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
 
         isAborted = false;
 
-        resourceNotificationManager = ResourceNotificationManager.getInstance();
-        resourceNotificationManager.registerHandler(this);
-
-        scheduleNotificationManager = ScheduleNotificationManager.getInstance();
+        scheduleNotificationManager = ScheduleNotificationManager.getInstance(isSandBoxExecution);
         scheduleNotificationManager.registerHandler(this);
 
-        predictionBasedSchedulerActionService = PredictionBasedSchedulerActionServiceImpl.getInstance();
-        resourceCategoryDataStructure_READ = ResourceCategoryDataStructure.getReadInstance();
-        resourceCategoryDataStructure_WRITE = ResourceCategoryDataStructure.getWriteInstance();
+        resourceNotificationManager = scheduleNotificationManager.getResourceNotificationManager();
+        resourceNotificationManager.registerHandler(this);
+
+        predictionBasedSchedulerActionService = PredictionBasedSchedulerActionServiceImpl.getInstance(scheduleNotificationManager);
+        resourceCategoryDataStructure_READ = ResourceCategoryDataStructure.getReadInstance(isSandBoxExecution);
+        resourceCategoryDataStructure_WRITE = ResourceCategoryDataStructure.getWriteInstance(isSandBoxExecution);
     }
 
     public long getStartTime() {
@@ -82,6 +86,12 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         System.out.println(schedulerName + ": Two-phase locking growing phase initiated.");
         System.out.println("=========================================================");
         for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+
+            if(resourceOperation.isAbortOperation()) {
+                isAborted = true;
+                System.out.println(schedulerName + ": Execution aborted due to LCLE");
+                return false;
+            }
 
             if (isAborted) {
                 return handleAbortOperation();
@@ -303,24 +313,40 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         if (!isFinished) {
             System.out.println(getSchedulerName() + ": Aborted. Waiting for other schedule to finish before retrying execution");
 
-            synchronized (this) {
-                try {
-                    wait(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
+//            synchronized (this) {
+//                try {
+//                    wait(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
 
             // Clean up before re-running
             resourceNotificationManager.deregisterHandler(this);
             scheduleNotificationManager.deregisterHandler(this);
-            resourceNotificationManager.resetAllLocks();
-            ResourceCategoryDataStructure.getReadInstance().reset();
-            ResourceCategoryDataStructure.getWriteInstance().reset();
+
+            for(ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+                if(resourceOperation.getOperation() == Operation.WRITE) {
+                    resourceCategoryDataStructure_WRITE.removeResourceOperationForResouce(resourceOperation.getResource(), resourceOperation);
+                    resourceNotificationManager.unlock(resourceOperation.getResource());
+                } else {
+                    resourceCategoryDataStructure_READ.removeResourceOperationForResouce(resourceOperation.getResource(), resourceOperation);
+                }
+            }
 
             System.out.println(getSchedulerName() + ": Other schedule finished. Now retrying...");
-            PredictionBasedScheduler predictionBasedScheduler_ForAbort = new PredictionBasedScheduler(getSchedule(), "Re-run scheduler for " + getSchedulerName());
-            predictionBasedScheduler_ForAbort.executeSchedule();
+            PredictionBasedScheduler predictionBasedScheduler_ForAbort = new PredictionBasedScheduler(getSchedule(),
+                    "Sandbox scheduler for " + getSchedulerName(), true);
+            boolean isSandboxExecutionSuccess = predictionBasedScheduler_ForAbort.executeSchedule();
+
+            if(isSandboxExecutionSuccess) {
+                System.out.println(predictionBasedScheduler_ForAbort.getSchedulerName() + ": Sandbox Execution Succeeded, Re-Run with Main System");
+
+                constructorOperations(schedule, schedulerName, false);
+                executeSchedule();
+            } else {
+                System.out.println(predictionBasedScheduler_ForAbort.getSchedulerName() + ": Sandbox Execution Failed. Execution Complete");
+            }
         }
     }
 

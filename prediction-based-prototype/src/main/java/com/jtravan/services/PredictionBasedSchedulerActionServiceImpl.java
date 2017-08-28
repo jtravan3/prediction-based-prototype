@@ -11,14 +11,14 @@ public class PredictionBasedSchedulerActionServiceImpl implements PredictionBase
     private static PredictionBasedSchedulerActionServiceImpl theInstance;
     private ScheduleNotificationManager scheduleNotificationManager;
 
-    private PredictionBasedSchedulerActionServiceImpl() {
-        scheduleNotificationManager = ScheduleNotificationManager.getInstance();
+    private PredictionBasedSchedulerActionServiceImpl(ScheduleNotificationManager scheduleNotificationManager) {
+        this.scheduleNotificationManager = scheduleNotificationManager;
     }
 
-    public static final PredictionBasedSchedulerActionServiceImpl getInstance() {
+    public static final PredictionBasedSchedulerActionServiceImpl getInstance(ScheduleNotificationManager scheduleNotificationManager) {
 
         if(theInstance == null) {
-            theInstance = new PredictionBasedSchedulerActionServiceImpl();
+            theInstance = new PredictionBasedSchedulerActionServiceImpl(scheduleNotificationManager);
         }
         return theInstance;
 

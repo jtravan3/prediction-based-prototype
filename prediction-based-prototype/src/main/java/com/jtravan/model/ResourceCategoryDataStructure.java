@@ -5,6 +5,7 @@ import java.util.*;
 /**
  * Created by johnravan on 6/22/16.
  */
+@SuppressWarnings("ALL")
 public class ResourceCategoryDataStructure {
 
 
@@ -18,21 +19,29 @@ public class ResourceCategoryDataStructure {
 
     }
 
-    public static final ResourceCategoryDataStructure getReadInstance() {
+    public static final ResourceCategoryDataStructure getReadInstance(boolean createOneTimeInstance) {
 
-        if(theReadInstance == null) {
-            theReadInstance = new ResourceCategoryDataStructure();
+        if(createOneTimeInstance) {
+            return new ResourceCategoryDataStructure();
+        } else {
+            if(theReadInstance == null) {
+                theReadInstance = new ResourceCategoryDataStructure();
+            }
+            return theReadInstance;
         }
-        return theReadInstance;
 
     }
 
-    public static final ResourceCategoryDataStructure getWriteInstance() {
+    public static final ResourceCategoryDataStructure getWriteInstance(boolean createOneTimeInstance) {
 
-        if(theWriteInstance == null) {
-            theWriteInstance = new ResourceCategoryDataStructure();
+        if(createOneTimeInstance) {
+            return new ResourceCategoryDataStructure();
+        } else {
+            if(theWriteInstance == null) {
+                theWriteInstance = new ResourceCategoryDataStructure();
+            }
+            return theWriteInstance;
         }
-        return theWriteInstance;
 
     }
 

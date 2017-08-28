@@ -13,9 +13,9 @@ public class RCDSTester {
     public static void main(String[] args) {
 
         TransactionGenerator generator = TransactionGenerator.getInstance();
-        List<Transaction> transactions = generator.generateRandomTransactions(20, 20);
+        List<Transaction> transactions = generator.generateRandomTransactions(20, 20, false);
 
-        ResourceCategoryDataStructure rcds = ResourceCategoryDataStructure.getReadInstance();
+        ResourceCategoryDataStructure rcds = ResourceCategoryDataStructure.getReadInstance(false);
 
         for(Transaction transaction : transactions) {
             for(ResourceOperation resourceOperation: transaction.getResourceOperationList()) {

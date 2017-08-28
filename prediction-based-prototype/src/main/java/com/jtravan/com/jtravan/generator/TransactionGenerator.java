@@ -13,6 +13,7 @@ import java.util.Random;
 public class TransactionGenerator {
 
     private static TransactionGenerator theInstance;
+    private int methodCallCount = 0;
 
     private TransactionGenerator() {}
 
@@ -25,7 +26,7 @@ public class TransactionGenerator {
 
     }
 
-    public List<Transaction> generateRandomTransactions(int numOfOperations, int numOfTransactions) {
+    public List<Transaction> generateRandomTransactions(int numOfOperations, int numOfTransactions, boolean controlCategory) {
 
         if(numOfOperations <= 0 || numOfTransactions <= 0) {
             return Collections.emptyList();
@@ -55,15 +56,19 @@ public class TransactionGenerator {
 
             }
 
-            Random random = new Random();
-            int randomInt2 = random.nextInt(500);
-            int category = randomInt2 % 4;
-            transaction.setCategory(Category.getCategoryByCategoryNum(category));
-//            transaction.setCategory(Category.HCHE);
-
-//            ResourceOperation commitOp = new ResourceOperation();
-//            commitOp.setIsCommitOperation(true);
-//            transaction.addResourceOperation(commitOp);
+            if(controlCategory) {
+                if(methodCallCount % 2 == 0) {
+                    transaction.setCategory(Category.HCHE);
+                } else {
+                    transaction.setCategory(Category.LCHE);
+                }
+                methodCallCount++;
+            } else {
+                Random random = new Random();
+                int randomInt2 = random.nextInt(500);
+                int category = randomInt2 % 4;
+                transaction.setCategory(Category.getCategoryByCategoryNum(category));
+            }
 
             transactions.add(transaction);
         }

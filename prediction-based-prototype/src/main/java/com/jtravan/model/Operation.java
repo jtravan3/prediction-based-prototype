@@ -9,7 +9,7 @@ public enum Operation {
 
     private final int operationNum;
 
-    private Operation(int operationNum) {
+    Operation(int operationNum) {
         this.operationNum = operationNum;
     }
 

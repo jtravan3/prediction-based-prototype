@@ -17,18 +17,26 @@ public class ScheduleNotificationManager implements ScheduleNotificationHandler 
     private List<ScheduleNotificationHandler> handlers;
     private static ScheduleNotificationManager theInstance;
 
-    private ScheduleNotificationManager() {
+    private ScheduleNotificationManager(boolean createOneTimeInstance) {
         handlers = new LinkedList<ScheduleNotificationHandler>();
-        resourceNotificationManager = ResourceNotificationManager.getInstance();
+        resourceNotificationManager = ResourceNotificationManager.getInstance(createOneTimeInstance);
     }
 
-    public synchronized static final ScheduleNotificationManager getInstance() {
+    public synchronized static final ScheduleNotificationManager getInstance(boolean createOneTimeInstance) {
 
-        if(theInstance == null) {
-            theInstance = new ScheduleNotificationManager();
+        if(createOneTimeInstance) {
+            return new ScheduleNotificationManager(createOneTimeInstance);
+        } else {
+            if(theInstance == null) {
+                theInstance = new ScheduleNotificationManager(createOneTimeInstance);
+            }
+            return theInstance;
         }
-        return theInstance;
 
+    }
+
+    public ResourceNotificationManager getResourceNotificationManager() {
+        return resourceNotificationManager;
     }
 
     public void abortSchedule(Schedule schedule) {
