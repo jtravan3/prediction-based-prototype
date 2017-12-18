@@ -1,15 +1,17 @@
 package com.jtravan.tester.concurrent;
 
-import com.jtravan.com.jtravan.generator.ScheduleGenerator;
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
 import com.jtravan.model.ResourceOperation;
-import com.jtravan.model.Schedule;
 import com.jtravan.model.Transaction;
 import com.jtravan.scheduler.NoLockingScheduler;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MultipleNoLockingSchedulerTester {
 
@@ -21,29 +23,19 @@ public class MultipleNoLockingSchedulerTester {
     public static void main(String[] args) throws InterruptedException, BrokenBarrierException {
 
         List<NoLockingScheduler> noLockingSchedulerLinkedList = new LinkedList<NoLockingScheduler>();
+        TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
+        List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS, true);
 
-        for(int i = 0; i < NUM_OF_SCHEDULERS_EXECUTING; i++) {
-            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
-            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS, true);
-
-            ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
-//            Schedule schedule;
-//            if (i == 0) {
-//                schedule = scheduleGenerator.create1of2ExampleSchedule_NonConflicting(Category.LCLE);
-//            } else {
-//                schedule = scheduleGenerator.create2of2ExampleSchedule_NonConflicting(Category.LCHE);
-//            }
-
-            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
-            System.out.println("Schedule to be executed: " + schedule);
-
-            noLockingSchedulerLinkedList.add(new NoLockingScheduler(schedule, "Scheduler " + i, false));
+        int count = 0;
+        for(Transaction transaction : transactionList) {
+            count++;
+            noLockingSchedulerLinkedList.add(new NoLockingScheduler(transaction, "Scheduler " + count, false));
         }
 
         // Total time if no overhead
         int totalWithoutOverhead = 0;
         for(NoLockingScheduler noLockingScheduler : noLockingSchedulerLinkedList) {
-            for (ResourceOperation ro : noLockingScheduler.getSchedule().getResourceOperationList()) {
+            for (ResourceOperation ro : noLockingScheduler.getTransaction().getResourceOperationList()) {
                 totalWithoutOverhead += ro.getExecutionTime();
             }
         }

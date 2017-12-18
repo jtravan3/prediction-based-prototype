@@ -1,6 +1,11 @@
 package com.jtravan.services;
 
-import com.jtravan.model.*;
+import com.jtravan.model.Action;
+import com.jtravan.model.Category;
+import com.jtravan.model.Operation;
+import com.jtravan.model.Resource;
+import com.jtravan.model.ResourceCategoryDataStructure;
+import com.jtravan.model.ResourceOperation;
 
 /**
  * Created by johnravan on 11/9/16.
@@ -9,13 +14,13 @@ import com.jtravan.model.*;
 public class PredictionBasedSchedulerActionServiceImpl implements PredictionBasedSchedulerActionService {
 
     private static PredictionBasedSchedulerActionServiceImpl theInstance;
-    private ScheduleNotificationManager scheduleNotificationManager;
+    private TransactionNotificationManager transactionNotificationManager;
 
-    private PredictionBasedSchedulerActionServiceImpl(ScheduleNotificationManager scheduleNotificationManager) {
-        this.scheduleNotificationManager = scheduleNotificationManager;
+    private PredictionBasedSchedulerActionServiceImpl(TransactionNotificationManager transactionNotificationManager) {
+        this.transactionNotificationManager = transactionNotificationManager;
     }
 
-    public static final PredictionBasedSchedulerActionServiceImpl getInstance(ScheduleNotificationManager scheduleNotificationManager) {
+    public static final PredictionBasedSchedulerActionServiceImpl getInstance(TransactionNotificationManager scheduleNotificationManager) {
 
         if(theInstance == null) {
             theInstance = new PredictionBasedSchedulerActionServiceImpl(scheduleNotificationManager);
@@ -45,8 +50,7 @@ public class PredictionBasedSchedulerActionServiceImpl implements PredictionBase
                         // Means a write operation needs to operate on something that has a read lock of lower priority.
                         // We are going to elevate it
                         ResourceOperation ro = rcdsRead.getHighestPriorityForResource(resource);
-                        scheduleNotificationManager.abortSchedule(ro.getAssociatedTransaction()
-                                .getScheduleTransactionIsApartOf());
+                        transactionNotificationManager.abortTransaction(ro.getAssociatedTransaction());
                         rcdsRead.clearHeapForResource(resource);
                         rcdsWrite.insertResourceOperationForResource(resource, resourceOperation);
                         return Action.ELEVATE;
@@ -76,8 +80,7 @@ public class PredictionBasedSchedulerActionServiceImpl implements PredictionBase
                         // The granted write lock has a lower priority than the requesting one AND there is no
                         // read lock granted so we are good to elevate
                         ResourceOperation ro = rcdsWrite.getHighestPriorityForResource(resource);
-                        scheduleNotificationManager.abortSchedule(ro.getAssociatedTransaction()
-                                .getScheduleTransactionIsApartOf());
+                        transactionNotificationManager.abortTransaction(ro.getAssociatedTransaction());
                         rcdsWrite.clearHeapForResource(resource);
                         rcdsWrite.insertResourceOperationForResource(resource, resourceOperation);
                         return Action.ELEVATE;
@@ -92,14 +95,12 @@ public class PredictionBasedSchedulerActionServiceImpl implements PredictionBase
 
                             // Abort read lock
                             ResourceOperation ro = rcdsRead.getHighestPriorityForResource(resource);
-                            scheduleNotificationManager.abortSchedule(ro.getAssociatedTransaction()
-                                    .getScheduleTransactionIsApartOf());
+                            transactionNotificationManager.abortTransaction(ro.getAssociatedTransaction());
                             rcdsRead.clearHeapForResource(resource);
 
                             // Abort write lock
                             ResourceOperation ro2 = rcdsWrite.getHighestPriorityForResource(resource);
-                            scheduleNotificationManager.abortSchedule(ro2.getAssociatedTransaction()
-                                    .getScheduleTransactionIsApartOf());
+                            transactionNotificationManager.abortTransaction(ro2.getAssociatedTransaction());
                             rcdsWrite.clearHeapForResource(resource);
                             rcdsWrite.insertResourceOperationForResource(resource, resourceOperation);
                             return Action.ELEVATE;
@@ -140,8 +141,7 @@ public class PredictionBasedSchedulerActionServiceImpl implements PredictionBase
                     // There is a write lock granted BUT it has a lower priority than the requesting lock
                     // so we can elevate
                     ResourceOperation ro = rcdsWrite.getHighestPriorityForResource(resource);
-                    scheduleNotificationManager.abortSchedule(ro.getAssociatedTransaction()
-                            .getScheduleTransactionIsApartOf());
+                    transactionNotificationManager.abortTransaction(ro.getAssociatedTransaction());
                     rcdsWrite.clearHeapForResource(resource);
                     rcdsRead.insertResourceOperationForResource(resource, resourceOperation);
                     return Action.ELEVATE;

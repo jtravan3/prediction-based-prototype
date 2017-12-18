@@ -1,40 +1,52 @@
 package com.jtravan.scheduler;
 
-import com.jtravan.model.*;
+import com.jtravan.model.Operation;
+import com.jtravan.model.ResourceNotification;
+import com.jtravan.model.ResourceOperation;
+import com.jtravan.model.Transaction;
+import com.jtravan.model.TransactionNotification;
+import com.jtravan.model.TransactionNotificationType;
 import com.jtravan.services.ResourceNotificationHandler;
 import com.jtravan.services.ResourceNotificationManager;
-import com.jtravan.services.ScheduleNotificationHandler;
-import com.jtravan.services.ScheduleNotificationManager;
+import com.jtravan.services.TransactionNotificationHandler;
+import com.jtravan.services.TransactionNotificationManager;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 
-public class NoLockingScheduler implements ScheduleExecutor,
-        ResourceNotificationHandler, ScheduleNotificationHandler, Runnable  {
+public class NoLockingScheduler implements TransactionExecutor,
+        ResourceNotificationHandler, TransactionNotificationHandler, Runnable  {
 
     private ResourceNotificationManager resourceNotificationManager;
-    private ScheduleNotificationManager scheduleNotificationManager;
-    private Schedule schedule;
+    private TransactionNotificationManager scheduleNotificationManager;
+    private Transaction transaction;
     private String schedulerName;
     private CyclicBarrier gate;
+
+    private List<ResourceOperation> resourceOperationList;
 
     private long startTime;
     private long endTime;
 
     private boolean isAborted;
 
-    public NoLockingScheduler(Schedule schedule, String name, boolean isSandBoxExecution) {
-        constructorOperations(schedule, name, isSandBoxExecution);
+    public NoLockingScheduler(Transaction transaction, String name, boolean isSandBoxExecution) {
+        constructorOperations(transaction, name, isSandBoxExecution);
     }
 
-    private void constructorOperations(Schedule schedule, String name, boolean isSandBoxExecution) {
+    private void constructorOperations(Transaction schedule, String name, boolean isSandBoxExecution) {
 
-        this.schedule = schedule;
+        this.transaction = schedule;
         this.schedulerName = name;
 
         isAborted = false;
 
-        scheduleNotificationManager = ScheduleNotificationManager.getInstance(isSandBoxExecution);
+        resourceOperationList = new LinkedList<ResourceOperation>();
+
+        scheduleNotificationManager = TransactionNotificationManager.getInstance(isSandBoxExecution);
         scheduleNotificationManager.registerHandler(this);
 
         resourceNotificationManager = scheduleNotificationManager.getResourceNotificationManager();
@@ -50,8 +62,8 @@ public class NoLockingScheduler implements ScheduleExecutor,
         return endTime;
     }
 
-    public Schedule getSchedule() {
-        return schedule;
+    public Transaction getTransaction() {
+        return transaction;
     }
 
     public String getSchedulerName() {
@@ -61,9 +73,9 @@ public class NoLockingScheduler implements ScheduleExecutor,
     public void setGate(CyclicBarrier gate) { this.gate = gate; }
 
     @SuppressWarnings("Duplicates")
-    public boolean executeSchedule() {
+    public boolean executeTransaction() {
 
-        if (schedule == null) {
+        if (transaction == null) {
             return false;
         }
 
@@ -82,7 +94,12 @@ public class NoLockingScheduler implements ScheduleExecutor,
         System.out.println("==========================================================");
         System.out.println(schedulerName + ": Two-phase locking shrinking phase initiated");
         System.out.println("==========================================================");
-        for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+        for (ResourceOperation resourceOperation : transaction.getResourceOperationList()) {
+
+            if(resourceOperation.isAbortOperation()) {
+                isAborted = true;
+                System.out.println(schedulerName + ": Execution aborted. Compensation transaction initiated.");
+            }
 
             if (isAborted) {
                 return handleAbortOperation();
@@ -91,6 +108,11 @@ public class NoLockingScheduler implements ScheduleExecutor,
             try {
                 System.out.println(schedulerName + ": Executing operation on Resource " + resourceOperation.getResource());
                 Thread.sleep(resourceOperation.getExecutionTime());
+
+                if (resourceOperation.getOperation() == Operation.WRITE) {
+                    resourceOperationList.add(resourceOperation);
+                }
+
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -104,13 +126,13 @@ public class NoLockingScheduler implements ScheduleExecutor,
         System.out.println(schedulerName + ": has successfully completed execution!");
         endTime = System.currentTimeMillis();
 
-        ScheduleNotification scheduleNotification = new ScheduleNotification();
-        scheduleNotification.setSchedule(schedule);
-        scheduleNotification.setScheduleNotificationType(ScheduleNotificationType.SCHEDULE_COMPLETE);
-        scheduleNotificationManager.handleScheduleNotification(scheduleNotification);
+//        TransactionNotification scheduleNotification = new TransactionNotification();
+//        scheduleNotification.setTransaction(transaction);
+//        scheduleNotification.setTransactionNotificationType(TransactionNotificationType.TRANSACTION_COMPLETE);
+//        scheduleNotificationManager.handleTransactionNotification(scheduleNotification);
 
-        scheduleNotificationManager.deregisterHandler(this);
-        resourceNotificationManager.deregisterHandler(this);
+//        scheduleNotificationManager.deregisterHandler(this);
+//        resourceNotificationManager.deregisterHandler(this);
 
         return true;
     }
@@ -124,13 +146,45 @@ public class NoLockingScheduler implements ScheduleExecutor,
             e.printStackTrace();
         }
 
-        executeSchedule();
+        executeTransaction();
 
     }
 
+    @SuppressWarnings("Duplicates")
     private boolean handleAbortOperation() {
+
+        isAborted = false;
+
         System.out.println(schedulerName + ": Execution aborted");
-        System.out.println(schedulerName + ": Waiting and trying execution again");
+        System.out.println(schedulerName + ": Creating and executing compensation transaction");
+
+        Iterator<ResourceOperation> resourceOperationIterator = resourceOperationList.iterator();
+        while(resourceOperationIterator.hasNext()) {
+
+            ResourceOperation resourceOperation = resourceOperationIterator.next();
+
+            if (isAborted) {
+                return handleAbortOperation();
+            }
+
+            try {
+                System.out.println(schedulerName + ": Executing operation on Resource " + resourceOperation.getResource());
+                Thread.sleep(resourceOperation.getExecutionTime());
+
+                if (resourceOperation.getOperation() == Operation.WRITE) {
+                    resourceOperationList.add(resourceOperation);
+                }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if (isAborted) {
+                return handleAbortOperation();
+            }
+
+        }
+
         return false;
     }
 
@@ -143,26 +197,26 @@ public class NoLockingScheduler implements ScheduleExecutor,
 
     }
 
-    public void handleScheduleNotification(ScheduleNotification scheduleNotification) {
+    public void handleTransactionNotification(TransactionNotification transactionNotification) {
 
-        if (scheduleNotification == null) {
+        if (transactionNotification == null) {
             return;
         }
 
-        Schedule schedule = scheduleNotification.getSchedule();
-        ScheduleNotificationType type = scheduleNotification.getScheduleNotificationType();
+        Transaction transaction = transactionNotification.getTransaction();
+        TransactionNotificationType type = transactionNotification.getTransactionNotificationType();
 
         switch (type) {
             case ABORT:
-            case SCHEDULE_COMPLETE:
+            case TRANSACTION_COMPLETE:
 
-                if(schedule != this.schedule) {
-                    // Notify any waiting
-                    synchronized (this) {
-                        System.out.println(schedulerName + ": Notifying just in case we need to start re-run");
-                        notifyAll();
-                    }
-                }
+//                if(transaction != this.transaction) {
+//                    // Notify any waiting
+//                    synchronized (this) {
+//                        System.out.println(schedulerName + ": Notifying just in case we need to start re-run");
+//                        notifyAll();
+//                    }
+//                }
 
                 break;
             default:

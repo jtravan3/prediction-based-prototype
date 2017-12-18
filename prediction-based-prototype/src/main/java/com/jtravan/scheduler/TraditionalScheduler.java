@@ -3,7 +3,7 @@ package com.jtravan.scheduler;
 import com.jtravan.model.Resource;
 import com.jtravan.model.ResourceNotification;
 import com.jtravan.model.ResourceOperation;
-import com.jtravan.model.Schedule;
+import com.jtravan.model.Transaction;
 import com.jtravan.services.ResourceNotificationHandler;
 import com.jtravan.services.ResourceNotificationManager;
 
@@ -13,34 +13,34 @@ import java.util.Map;
 /**
  * Created by johnravan on 11/17/16.
  */
-public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificationHandler, Runnable {
+public class TraditionalScheduler implements TransactionExecutor, ResourceNotificationHandler, Runnable {
 
     private Map<Resource, Integer> resourcesWeHaveLockOn;
     private Resource resourceWaitingOn;
-    private Schedule schedule;
+    private Transaction transaction;
     private String schedulerName;
     private ResourceNotificationManager resourceNotificationManager;
 
-    public TraditionalScheduler(Schedule schedule, String name) {
+    public TraditionalScheduler(Transaction transaction, String name) {
         this.schedulerName = name;
-        this.schedule = schedule;
+        this.transaction = transaction;
         this.resourcesWeHaveLockOn = new HashMap<Resource, Integer>();
         resourceNotificationManager = ResourceNotificationManager.getInstance(false);
         resourceNotificationManager.registerHandler(this);
     }
 
     public void run() {
-        executeSchedule();
+        executeTransaction();
     }
 
-    public Schedule getSchedule() {
-        return schedule;
+    public Transaction getTransaction() {
+        return transaction;
     }
 
     @SuppressWarnings("Duplicates")
-    public synchronized boolean executeSchedule() {
+    public synchronized boolean executeTransaction() {
 
-        if (schedule == null) {
+        if (transaction == null) {
             return false;
         }
 
@@ -48,7 +48,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
         System.out.println("=========================================================");
         System.out.println(schedulerName + ": Two-phase locking growing phase initiated.");
         System.out.println("=========================================================");
-        for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+        for (ResourceOperation resourceOperation : transaction.getResourceOperationList()) {
 
             if (resourceOperation.getResource().isLocked()) {
 
@@ -93,7 +93,7 @@ public class TraditionalScheduler implements ScheduleExecutor, ResourceNotificat
         System.out.println("==========================================================");
         System.out.println(schedulerName + ": Two-phase locking shrinking phase initiated");
         System.out.println("==========================================================");
-        for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+        for (ResourceOperation resourceOperation : transaction.getResourceOperationList()) {
 
             try {
                 System.out.println(schedulerName + ": Executing operation on Resource " + resourceOperation.getResource());

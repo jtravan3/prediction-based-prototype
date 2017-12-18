@@ -1,58 +1,49 @@
 package com.jtravan.tester.concurrent;
 
-import com.jtravan.com.jtravan.generator.ScheduleGenerator;
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
 import com.jtravan.model.ResourceOperation;
-import com.jtravan.model.Schedule;
 import com.jtravan.model.Transaction;
 import com.jtravan.scheduler.PredictionBasedScheduler;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by johnravan on 1/26/17.
  */
 public class MultiplePredictionBasedSchedulerTester {
 
-    private static final int NUM_OF_SCHEDULERS_EXECUTING = 2;
     private static final int NUM_OF_OPERATIONS_PER_TRANSACTION = 10;
-    private static final int NUM_OF_TRANSACTIONS = 1;
+    private static final int NUM_OF_TRANSACTIONS = 100;
 
     @SuppressWarnings("Duplicates")
     public static void main(String[] args) throws InterruptedException, BrokenBarrierException {
 
+        TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
+        List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS, true);
         List<PredictionBasedScheduler> predictionBasedSchedulerList = new LinkedList<PredictionBasedScheduler>();
 
-        for(int i = 0; i < NUM_OF_SCHEDULERS_EXECUTING; i++) {
-            TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
-            List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS, true);
-
-            ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
-//            Schedule schedule;
-//            if (i == 0) {
-//                schedule = scheduleGenerator.create1of2ExampleSchedule_NonConflicting(Category.LCLE);
-//            } else {
-//                schedule = scheduleGenerator.create2of2ExampleSchedule_NonConflicting(Category.LCHE);
-//            }
-
-            Schedule schedule = scheduleGenerator.createSchedule(transactionList);
-            System.out.println("Schedule to be executed: " + schedule);
-
-            predictionBasedSchedulerList.add(new PredictionBasedScheduler(schedule, "Scheduler " + i, false));
+        int count = 0;
+        for(Transaction transaction : transactionList) {
+            count++;
+            predictionBasedSchedulerList.add(new PredictionBasedScheduler(transaction, "Scheduler " + count, false));
         }
 
         // Total time if no overhead
         int totalWithoutOverhead = 0;
         for(PredictionBasedScheduler pbs : predictionBasedSchedulerList) {
-            for (ResourceOperation ro : pbs.getSchedule().getResourceOperationList()) {
+            for (ResourceOperation ro : pbs.getTransaction().getResourceOperationList()) {
                 totalWithoutOverhead += ro.getExecutionTime();
             }
         }
 
-        ExecutorService executorService = Executors.newFixedThreadPool(NUM_OF_SCHEDULERS_EXECUTING);
-        CyclicBarrier gate = new CyclicBarrier(NUM_OF_SCHEDULERS_EXECUTING + 1);
+        ExecutorService executorService = Executors.newFixedThreadPool(transactionList.size());
+        CyclicBarrier gate = new CyclicBarrier(transactionList.size() + 1);
 
         final long startTime = System.currentTimeMillis();
 

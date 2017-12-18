@@ -11,15 +11,6 @@ public class Transaction {
 
     private List<ResourceOperation> resourceOperationList;
     private Category category;
-    private Schedule scheduleTransactionIsApartOf;
-
-    public Schedule getScheduleTransactionIsApartOf() {
-        return scheduleTransactionIsApartOf;
-    }
-
-    public void setScheduleTransactionIsApartOf(Schedule scheduleTransactionIsApartOf) {
-        this.scheduleTransactionIsApartOf = scheduleTransactionIsApartOf;
-    }
 
     public Transaction() {
         resourceOperationList = new LinkedList<ResourceOperation>();

@@ -1,7 +1,20 @@
 package com.jtravan.scheduler;
 
-import com.jtravan.model.*;
-import com.jtravan.services.*;
+import com.jtravan.model.Action;
+import com.jtravan.model.Operation;
+import com.jtravan.model.Resource;
+import com.jtravan.model.ResourceCategoryDataStructure;
+import com.jtravan.model.ResourceNotification;
+import com.jtravan.model.ResourceOperation;
+import com.jtravan.model.Transaction;
+import com.jtravan.model.TransactionNotification;
+import com.jtravan.model.TransactionNotificationType;
+import com.jtravan.services.PredictionBasedSchedulerActionService;
+import com.jtravan.services.PredictionBasedSchedulerActionServiceImpl;
+import com.jtravan.services.ResourceNotificationHandler;
+import com.jtravan.services.ResourceNotificationManager;
+import com.jtravan.services.TransactionNotificationHandler;
+import com.jtravan.services.TransactionNotificationManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,18 +24,18 @@ import java.util.concurrent.CyclicBarrier;
 /**
  * Created by johnravan on 11/17/16.
  */
-public class PredictionBasedScheduler implements ScheduleExecutor,
-        ResourceNotificationHandler, ScheduleNotificationHandler, Runnable {
+public class PredictionBasedScheduler implements TransactionExecutor,
+        ResourceNotificationHandler, TransactionNotificationHandler, Runnable {
 
     private PredictionBasedSchedulerActionService predictionBasedSchedulerActionService;
     private ResourceCategoryDataStructure resourceCategoryDataStructure_READ;
     private ResourceCategoryDataStructure resourceCategoryDataStructure_WRITE;
     private ResourceNotificationManager resourceNotificationManager;
-    private ScheduleNotificationManager scheduleNotificationManager;
+    private TransactionNotificationManager scheduleNotificationManager;
     private Map<Resource, Integer> resourcesWeHaveLockOn_Read;
     private Map<Resource, Integer> resourcesWeHaveLockOn_Write;
     private Resource resourceWaitingOn;
-    private Schedule schedule;
+    private Transaction transaction;
     private String schedulerName;
     private CyclicBarrier gate;
 
@@ -31,19 +44,19 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
 
     private boolean isAborted;
 
-    public PredictionBasedScheduler(Schedule schedule, String name, boolean isSandBoxExecution) {
-        constructorOperations(schedule, name, isSandBoxExecution);
+    public PredictionBasedScheduler(Transaction transaction, String name, boolean isSandBoxExecution) {
+        constructorOperations(transaction, name, isSandBoxExecution);
     }
 
-    private void constructorOperations(Schedule schedule, String name, boolean isSandBoxExecution) {
-        this.schedule = schedule;
+    private void constructorOperations(Transaction transaction, String name, boolean isSandBoxExecution) {
+        this.transaction = transaction;
         this.schedulerName = name;
         this.resourcesWeHaveLockOn_Read = new HashMap<Resource, Integer>();
         this.resourcesWeHaveLockOn_Write = new HashMap<Resource, Integer>();
 
         isAborted = false;
 
-        scheduleNotificationManager = ScheduleNotificationManager.getInstance(isSandBoxExecution);
+        scheduleNotificationManager = TransactionNotificationManager.getInstance(isSandBoxExecution);
         scheduleNotificationManager.registerHandler(this);
 
         resourceNotificationManager = scheduleNotificationManager.getResourceNotificationManager();
@@ -62,8 +75,8 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         return endTime;
     }
 
-    public Schedule getSchedule() {
-        return schedule;
+    public Transaction getTransaction() {
+        return transaction;
     }
 
     public String getSchedulerName() {
@@ -72,10 +85,9 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
 
     public void setGate(CyclicBarrier gate) { this.gate = gate; }
 
-    @SuppressWarnings("Duplicates")
-    public boolean executeSchedule() {
+    private boolean growingPhaseSuccessful() {
 
-        if (schedule == null) {
+        if (transaction == null) {
             return false;
         }
 
@@ -85,7 +97,7 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         System.out.println("=========================================================");
         System.out.println(schedulerName + ": Two-phase locking growing phase initiated.");
         System.out.println("=========================================================");
-        for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+        for (ResourceOperation resourceOperation : transaction.getResourceOperationList()) {
 
             if(resourceOperation.isAbortOperation()) {
                 isAborted = true;
@@ -118,7 +130,7 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                         continue;
                     } else if(resourceOperation.getOperation() == Operation.READ &&
                             (resourcesWeHaveLockOn_Read.containsKey(resourceOperation.getResource()) ||
-                             resourcesWeHaveLockOn_Write.containsKey(resourceOperation.getResource() ))) {
+                                    resourcesWeHaveLockOn_Write.containsKey(resourceOperation.getResource() ))) {
 
                         System.out.println(schedulerName + ": Already have lock for Resource "
                                 + resourceOperation.getResource() + ". Continuing execution");
@@ -151,7 +163,7 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                     break;
                 case ELEVATE:
 
-                    System.out.println(schedulerName + ": Other schedule abort initiated. Now locking resource...");
+                    System.out.println(schedulerName + ": Other transaction abort initiated. Now locking resource...");
                     resourceWaitingOn = resourceOperation.getResource();
                     resourceNotificationManager.lock(resourceOperation.getResource(), resourceOperation.getOperation());
                     if(resourceOperation.getOperation() == Operation.READ) {
@@ -202,15 +214,17 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
 
         }
 
-        if (isAborted) {
-            return handleAbortOperation();
-        }
+        return true;
+
+    }
+
+    private boolean shrinkingPhaseSuccessful() {
 
         // two phase locking - shrinking phase
         System.out.println("==========================================================");
         System.out.println(schedulerName + ": Two-phase locking shrinking phase initiated");
         System.out.println("==========================================================");
-        for (ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+        for (ResourceOperation resourceOperation : transaction.getResourceOperationList()) {
 
             if (isAborted) {
                 return handleAbortOperation();
@@ -265,13 +279,32 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
 
         }
 
+        return true;
+
+    }
+
+    @SuppressWarnings("Duplicates")
+    public boolean executeTransaction() {
+
+        if (!growingPhaseSuccessful()) {
+            return false;
+        }
+
+        if (isAborted) {
+            return handleAbortOperation();
+        }
+
+        if (!shrinkingPhaseSuccessful()) {
+            return false;
+        }
+
         System.out.println(schedulerName + ": has successfully completed execution!");
         endTime = System.currentTimeMillis();
 
-        ScheduleNotification scheduleNotification = new ScheduleNotification();
-        scheduleNotification.setSchedule(schedule);
-        scheduleNotification.setScheduleNotificationType(ScheduleNotificationType.SCHEDULE_COMPLETE);
-        scheduleNotificationManager.handleScheduleNotification(scheduleNotification);
+        TransactionNotification transactionNotification = new TransactionNotification();
+        transactionNotification.setTransaction(transaction);
+        transactionNotification.setTransactionNotificationType(TransactionNotificationType.TRANSACTION_COMPLETE);
+        scheduleNotificationManager.handleTransactionNotification(transactionNotification);
 
         scheduleNotificationManager.deregisterHandler(this);
         resourceNotificationManager.deregisterHandler(this);
@@ -308,10 +341,10 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
             e.printStackTrace();
         }
 
-        boolean isFinished = executeSchedule();
+        boolean isFinished = executeTransaction();
 
         if (!isFinished) {
-            System.out.println(getSchedulerName() + ": Aborted. Waiting for other schedule to finish before retrying execution");
+            System.out.println(getSchedulerName() + ": Aborted. Waiting for other transaction to finish before retrying execution");
 
 //            synchronized (this) {
 //                try {
@@ -325,7 +358,7 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
             resourceNotificationManager.deregisterHandler(this);
             scheduleNotificationManager.deregisterHandler(this);
 
-            for(ResourceOperation resourceOperation : schedule.getResourceOperationList()) {
+            for(ResourceOperation resourceOperation : transaction.getResourceOperationList()) {
                 if(resourceOperation.getOperation() == Operation.WRITE) {
                     resourceCategoryDataStructure_WRITE.removeResourceOperationForResouce(resourceOperation.getResource(), resourceOperation);
                     resourceNotificationManager.unlock(resourceOperation.getResource());
@@ -334,16 +367,16 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
                 }
             }
 
-            System.out.println(getSchedulerName() + ": Other schedule finished. Now retrying...");
-            PredictionBasedScheduler predictionBasedScheduler_ForAbort = new PredictionBasedScheduler(getSchedule(),
+            System.out.println(getSchedulerName() + ": Other transaction finished. Now retrying...");
+            PredictionBasedScheduler predictionBasedScheduler_ForAbort = new PredictionBasedScheduler(getTransaction(),
                     "Sandbox scheduler for " + getSchedulerName(), true);
-            boolean isSandboxExecutionSuccess = predictionBasedScheduler_ForAbort.executeSchedule();
+            boolean isSandboxExecutionSuccess = predictionBasedScheduler_ForAbort.executeTransaction();
 
             if(isSandboxExecutionSuccess) {
                 System.out.println(predictionBasedScheduler_ForAbort.getSchedulerName() + ": Sandbox Execution Succeeded, Re-Run with Main System");
 
-                constructorOperations(schedule, schedulerName, false);
-                executeSchedule();
+                constructorOperations(transaction, schedulerName, false);
+                executeTransaction();
             } else {
                 System.out.println(predictionBasedScheduler_ForAbort.getSchedulerName() + ": Sandbox Execution Failed. Execution Complete");
             }
@@ -374,31 +407,31 @@ public class PredictionBasedScheduler implements ScheduleExecutor,
         }
     }
 
-    public void handleScheduleNotification(ScheduleNotification scheduleNotification) {
+    public void handleTransactionNotification(TransactionNotification transactionNotification) {
 
-        if (scheduleNotification == null) {
+        if (transactionNotification == null) {
             return;
         }
 
-        Schedule schedule = scheduleNotification.getSchedule();
-        ScheduleNotificationType type = scheduleNotification.getScheduleNotificationType();
+        Transaction transaction = transactionNotification.getTransaction();
+        TransactionNotificationType type = transactionNotification.getTransactionNotificationType();
 
         switch (type) {
             case ABORT:
 
 
-                if(schedule == this.schedule) {
+                if(transaction == this.transaction) {
                     isAborted = true;
-                    for (ResourceOperation ro : schedule.getResourceOperationList()) {
+                    for (ResourceOperation ro : transaction.getResourceOperationList()) {
                         removeFromCorrectRCDS(ro);
                         resourceNotificationManager.unlock(ro.getResource());
                     }
                 }
 
                 break;
-            case SCHEDULE_COMPLETE:
+            case TRANSACTION_COMPLETE:
 
-                if(schedule != this.schedule) {
+                if(transaction != this.transaction) {
                     // Notify any waiting
                     synchronized (this) {
                         System.out.println(schedulerName + ": Notifying just in case we need to start re-run");

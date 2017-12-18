@@ -1,8 +1,6 @@
 package com.jtravan.tester.single;
 
-import com.jtravan.com.jtravan.generator.ScheduleGenerator;
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
-import com.jtravan.model.Schedule;
 import com.jtravan.model.Transaction;
 import com.jtravan.scheduler.TraditionalScheduler;
 
@@ -21,14 +19,11 @@ public class SingleTraditionalSchedulerTester {
         TransactionGenerator transactionGenerator = TransactionGenerator.getInstance();
         List<Transaction> transactionList = transactionGenerator.generateRandomTransactions(NUM_OF_OPERATIONS_PER_TRANSACTION, NUM_OF_TRANSACTIONS, false);
 
-        ScheduleGenerator scheduleGenerator = ScheduleGenerator.getInstance();
-        Schedule schedule = scheduleGenerator.createSchedule(transactionList);
-
-        System.out.println("Schedule to be executed: " + schedule);
+        System.out.println("Schedule to be executed: " + transactionList.get(0));
 
         final long startTime = System.currentTimeMillis();
-        TraditionalScheduler traditionalScheduler = new TraditionalScheduler(schedule, "Scheduler 1");
-        traditionalScheduler.executeSchedule();
+        TraditionalScheduler traditionalScheduler = new TraditionalScheduler(transactionList.get(0), "Scheduler 1");
+        traditionalScheduler.executeTransaction();
         final long endTime = System.currentTimeMillis();
 
         System.out.println("Total execution time: " + (endTime - startTime));
