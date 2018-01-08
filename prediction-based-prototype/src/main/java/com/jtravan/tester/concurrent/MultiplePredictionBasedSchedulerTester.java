@@ -1,5 +1,6 @@
 package com.jtravan.tester.concurrent;
 
+import com.jtravan.com.jtravan.generator.BatchFactory;
 import com.jtravan.com.jtravan.generator.TransactionGenerator;
 import com.jtravan.model.ResourceOperation;
 import com.jtravan.model.Transaction;
@@ -31,6 +32,7 @@ public class MultiplePredictionBasedSchedulerTester {
         int count = 0;
         for(Transaction transaction : transactionList) {
             count++;
+            BatchFactory.setAbortPercentageBasedOnCategory(transaction);
             predictionBasedSchedulerList.add(new PredictionBasedScheduler(transaction, "Scheduler " + count, false));
         }
 

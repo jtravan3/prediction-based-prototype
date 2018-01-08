@@ -23,7 +23,6 @@ public class BatchFactory {
 
     }
 
-
     public static Transaction setAbortPercentageBasedOnCategory(Transaction transaction) {
 
         if (transaction == null) {
@@ -32,12 +31,12 @@ public class BatchFactory {
 
         switch (transaction.getCategory()) {
             case HCHE:
-                break;
             case HCLE:
+                setAbortPercentage(transaction, 0);
                 break;
             case LCHE:
-                break;
             case LCLE:
+                setAbortPercentage(transaction, getRandomNumberInRange(50, 100));
                 break;
             default:
                 break;
@@ -45,6 +44,16 @@ public class BatchFactory {
 
         return transaction;
 
+    }
+
+    private static int getRandomNumberInRange(int min, int max) {
+
+        if (min >= max) {
+            throw new IllegalArgumentException("max must be greater than min");
+        }
+
+        Random r = new Random();
+        return r.nextInt((max - min) + 1) + min;
     }
 
 }
